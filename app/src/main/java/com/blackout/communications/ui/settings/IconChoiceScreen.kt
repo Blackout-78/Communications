@@ -25,15 +25,14 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.blackout.communications.R
 import com.blackout.communications.settings.AppIcon
+import com.blackout.communications.settings.IconGlyph
 import com.blackout.communications.ui.theme.AppColors
 import com.blackout.communications.ui.theme.ThemeState
 
@@ -82,24 +81,20 @@ fun IconModeCard(title: String, body: String, selected: Boolean = false, onClick
 fun SingleIconPreview(size: Dp) {
     val context = LocalContext.current
     val a = ThemeState.appearance
-    val img = remember(a.iconStyle, a.iconColor, a.iconColor2) { AppIcon.render(context, a.iconStyle, a.iconColor, a.iconColor2, 256).asImageBitmap() }
+    val img = remember(a.iconStyle, a.iconColor, a.iconColor2) { AppIcon.render(context, IconGlyph.Main, a.iconStyle, a.iconColor, a.iconColor2, 256).asImageBitmap() }
     Image(img, "One Communications icon", modifier = Modifier.size(size).clip(CircleShape))
 }
 
 @Composable
 fun ThreeIconsPreview(size: Dp) {
+    val context = LocalContext.current
+    val a = ThemeState.appearance
     Row(horizontalArrangement = Arrangement.spacedBy(14.dp)) {
-        listOf(
-            R.drawable.ic_tab_contacts_fg to "Contacts",
-            R.drawable.ic_tab_messages_fg to "Messages",
-            R.drawable.ic_tab_calls_fg to "Call Log",
-        ).forEach { (res, label) ->
+        AppIcon.TAB_GLYPHS.forEach { g ->
+            val img = remember(g, a.iconStyle, a.iconColor, a.iconColor2) { AppIcon.render(context, g, a.iconStyle, a.iconColor, a.iconColor2, 256).asImageBitmap() }
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Box(Modifier.size(size).clip(CircleShape).background(Color.White), contentAlignment = Alignment.Center) {
-                    // The drawing has padding around it (adaptive icon), so show it a bit larger than the circle.
-                    Image(painterResource(res), null, modifier = Modifier.size(size * 1.5f))
-                }
-                Text(label, fontSize = 12.sp, color = AppColors.SubText, modifier = Modifier.padding(top = 4.dp))
+                Image(img, g.label, modifier = Modifier.size(size).clip(CircleShape))
+                Text(g.label, fontSize = 12.sp, color = AppColors.SubText, modifier = Modifier.padding(top = 4.dp))
             }
         }
     }

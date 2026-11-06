@@ -66,6 +66,7 @@ import com.blackout.communications.data.StartTab
 import com.blackout.communications.data.TextSize
 import com.blackout.communications.data.ThemeMode
 import com.blackout.communications.settings.AppIcon
+import com.blackout.communications.settings.IconGlyph
 import com.blackout.communications.ui.components.ColorPickerDialog
 import com.blackout.communications.ui.components.InfoCard
 import com.blackout.communications.ui.components.Swatch
@@ -208,19 +209,14 @@ fun SettingsScreen(
                     }) { ThreeIconsPreview(26.dp) }
                 }
             }
-            if (three) {
-                Text(
-                    "The three icons use the original blue and white. The colors below apply to the home-screen shortcut.",
-                    fontSize = 12.sp, color = AppColors.SubText, modifier = Modifier.padding(start = 16.dp, end = 16.dp, bottom = 10.dp),
-                )
-            }
+            Text(
+                "The style and colors below apply to ${if (three) "all three icons" else "the icon"}. Home-screen shortcuts use your exact colors; the app drawer uses the closest of 357 ready-made designs.",
+                fontSize = 12.sp, color = AppColors.SubText, modifier = Modifier.padding(start = 16.dp, end = 16.dp, bottom = 10.dp),
+            )
             Divider()
             // Live preview of your icon, as it will look on the home screen.
-            val preview = remember(a.iconStyle, a.iconColor, a.iconColor2) {
-                AppIcon.render(context, a.iconStyle, a.iconColor, a.iconColor2, 288).asImageBitmap()
-            }
             Row(Modifier.fillMaxWidth().padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
-                Image(preview, "Your app icon", modifier = Modifier.size(84.dp).clip(CircleShape))
+                if (three) ThreeIconsPreview(48.dp) else SingleIconPreview(84.dp)
                 Column(Modifier.padding(start = 16.dp)) {
                     Text("Style ${a.iconStyle.name} · ${a.iconStyle.label}", fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
                     Text(a.iconStyle.description, fontSize = 13.sp, color = AppColors.SubText)
@@ -230,7 +226,9 @@ fun SettingsScreen(
             Text("Style", fontSize = 15.sp, modifier = Modifier.padding(start = 16.dp, top = 12.dp))
             Row(Modifier.fillMaxWidth().padding(12.dp), horizontalArrangement = Arrangement.SpaceEvenly) {
                 IconStyle.entries.forEach { st ->
-                    val img = remember(st, a.iconColor, a.iconColor2) { AppIcon.render(context, st, a.iconColor, a.iconColor2, 168).asImageBitmap() }
+                    val img = remember(st, a.iconColor, a.iconColor2, three) {
+                        AppIcon.render(context, if (three) IconGlyph.Contacts else IconGlyph.Main, st, a.iconColor, a.iconColor2, 168).asImageBitmap()
+                    }
                     val selected = st == a.iconStyle
                     Column(
                         Modifier.clip(RoundedCornerShape(12.dp))
@@ -261,9 +259,13 @@ fun SettingsScreen(
                 Swatch(Color(a.iconColor2))
             }
             Divider()
-            Row1("Add this icon to home screen", null, "Uses your exact colors. The app drawer uses the closest of 357 ready-made designs.") {
-                if (!AppIcon.pinOrUpdateShortcut(context, a.iconStyle, a.iconColor, a.iconColor2, ask = true)) {
-                    Toast.makeText(context, "Your home screen doesn't allow adding shortcuts", Toast.LENGTH_SHORT).show()
+            // Home-screen shortcuts in your exact colors. Each is added separately, since phones ask about one at a time.
+            (if (three) AppIcon.TAB_GLYPHS else listOf(IconGlyph.Main)).forEachIndexed { i, g ->
+                if (i > 0) Divider()
+                Row1("Add ${g.label} icon to home screen", null, "Uses your exact colors") {
+                    if (!AppIcon.pinOrUpdateShortcut(context, g, a.iconStyle, a.iconColor, a.iconColor2, ask = true)) {
+                        Toast.makeText(context, "Your home screen doesn't allow adding shortcuts", Toast.LENGTH_SHORT).show()
+                    }
                 }
             }
             Divider()
@@ -387,8 +389,8 @@ fun SettingsScreen(
 /** Saves the icon choice and updates the app drawer icon and home-screen shortcut. */
 private fun setIcon(context: android.content.Context, app: CommunicationsApp, next: Appearance) {
     app.updateAppearance { it.copy(iconStyle = next.iconStyle, iconColor = next.iconColor, iconColor2 = next.iconColor2) }
-    AppIcon.applyDrawerIcon(context, next.iconStyle, next.iconColor, next.iconColor2)
-    AppIcon.pinOrUpdateShortcut(context, next.iconStyle, next.iconColor, next.iconColor2, ask = false)
+    AppIcon.applyDrawerIcons(context, next.iconStyle, next.iconColor, next.iconColor2)
+    AppIcon.updatePinnedShortcuts(context, next.iconStyle, next.iconColor, next.iconColor2)
 }
 
 private fun themeColor(slot: ColorSlot): Color = when (slot) {

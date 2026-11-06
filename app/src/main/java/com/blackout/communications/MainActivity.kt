@@ -47,13 +47,14 @@ class MainActivity : ComponentActivity() {
         val alias = intent.component?.className.orEmpty()
         request.value = when (intent.action) {
             Intent.ACTION_MAIN -> when {
-                alias.endsWith(".OpenContacts") -> LaunchRequest.OpenTab("Contacts")
-                alias.endsWith(".OpenChats") -> LaunchRequest.OpenTab("Chats")
-                alias.endsWith(".OpenCalls") -> LaunchRequest.OpenTab("Calls")
+                alias.contains(".OpenContacts") -> LaunchRequest.OpenTab("Contacts")
+                alias.contains(".OpenChats") -> LaunchRequest.OpenTab("Chats")
+                alias.contains(".OpenCalls") -> LaunchRequest.OpenTab("Calls")
                 else -> null
             }
             ACTION_ADD_CALL -> LaunchRequest.Dial("")
             ACTION_OPEN_BACKUP -> LaunchRequest.Backup
+            ACTION_OPEN_TAB -> intent.getStringExtra(EXTRA_TAB)?.let { LaunchRequest.OpenTab(it) }
             ACTION_OPEN_THREAD -> intent.getLongExtra(MessageNotifications.EXTRA_THREAD, -1).takeIf { it >= 0 }?.let { LaunchRequest.Thread(it) }
             ACTION_OPEN_CONTACT -> intent.getLongExtra(EXTRA_CONTACT, -1).takeIf { it >= 0 }?.let { LaunchRequest.Contact(it) }
             Intent.ACTION_DIAL -> LaunchRequest.Dial(if (scheme == "tel") data.schemeSpecificPart.orEmpty() else "")
@@ -75,6 +76,8 @@ class MainActivity : ComponentActivity() {
         const val ACTION_OPEN_THREAD = "com.blackout.communications.OPEN_THREAD"
         const val ACTION_OPEN_CONTACT = "com.blackout.communications.OPEN_CONTACT"
         const val EXTRA_CONTACT = "contact_id"
+        const val ACTION_OPEN_TAB = "com.blackout.communications.OPEN_TAB"
+        const val EXTRA_TAB = "tab"
         const val ACTION_OPEN_BACKUP = "com.blackout.communications.OPEN_BACKUP"
     }
 }

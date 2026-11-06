@@ -14,29 +14,31 @@ import com.blackout.communications.MainActivity
 import com.blackout.communications.R
 import com.blackout.communications.data.IconStyle
 
+/** The four icon drawings: the single app icon, and Contacts, Messages and Call Log for three-icon mode. */
+enum class IconGlyph(val key: String, val label: String, val defaultAlias: String, val tab: String?) {
+    Main("main", "Communications", ".Home", null),
+    Contacts("contacts", "Contacts", ".OpenContacts", "Contacts"),
+    Messages("messages", "Messages", ".OpenChats", "Chats"),
+    Calls("calls", "Call Log", ".OpenCalls", "Calls"),
+}
+
 /**
- * The app icon: a style (A, B or C) and two colors you pick.
- * - Home-screen shortcut: drawn in exactly your two colors, updated in place when you change them.
- * - App drawer icon: Android only allows ready-made icons, so it switches to the closest of 24 designs.
+ * App icons: one icon or three, each in a style (A, B or C) and two colors you pick.
+ * - Home-screen shortcuts are drawn in exactly your colors.
+ * - App drawer icons: Android only allows ready-made icons, so each switches to the closest of 357 designs.
  */
 object AppIcon {
-    private const val SHORTCUT_ID = "colored_icon"
     const val DEFAULT_MAIN = 0xFF377DC0.toInt()
     const val DEFAULT_SECOND = 0xFFFFFFFF.toInt()
+    val TAB_GLYPHS = listOf(IconGlyph.Contacts, IconGlyph.Messages, IconGlyph.Calls)
 
-    private data class Preset(val style: IconStyle, val main: Int, val second: Int, val alias: String)
+    private data class Preset(val glyph: String, val style: IconStyle, val main: Int, val second: Int, val alias: String)
 
-    private fun presets(context: Context): List<Preset> =
-        context.resources.getStringArray(R.array.icon_presets).map { line ->
-            val (s, m, c, alias) = line.split("|")
-            Preset(IconStyle.valueOf(s), android.graphics.Color.parseColor(m), android.graphics.Color.parseColor(c), alias)
-        }
-
-    /**
-     * Sets the app drawer icon to the closest ready-made design (357 to choose from).
-     * Only the old and new icons are switched, so the change is quick.
-     */
-    private val TAB_ALIASES = listOf(".OpenContacts", ".OpenChats", ".OpenCalls")
+    private var cache: List<Preset>? = null
+    private fun presets(context: Context): List<Preset> = cache ?: context.resources.getStringArray(R.array.icon_presets).map { line ->
+        val (g, s, m, c, alias) = line.split("|")
+        Preset(g, IconStyle.valueOf(s), android.graphics.Color.parseColor(m), android.graphics.Color.parseColor(c), alias)
+    }.also { cache = it }
 
     fun prefs(context: Context) = context.getSharedPreferences("app_icon", Context.MODE_PRIVATE)
 
@@ -46,66 +48,75 @@ object AppIcon {
     /** Has the first-run question (one icon or three) been answered? */
     fun choiceMade(context: Context) = prefs(context).getBoolean("choiceMade", false)
 
-    /** Switches between one icon and three icons in the app drawer. */
     fun setThreeIcons(context: Context, three: Boolean, style: IconStyle, main: Int, second: Int) {
         prefs(context).edit().putBoolean("three", three).putBoolean("choiceMade", true).apply()
-        val pm = context.packageManager
-        fun set(alias: String, on: Boolean) = runCatching {
-            pm.setComponentEnabledSetting(
-                ComponentName(context, context.packageName + alias),
-                if (on) PackageManager.COMPONENT_ENABLED_STATE_ENABLED else PackageManager.COMPONENT_ENABLED_STATE_DISABLED,
-                PackageManager.DONT_KILL_APP,
-            )
-        }
-        if (three) {
-            TAB_ALIASES.forEach { set(it, true) }
-            set(prefs(context).getString("alias", ".Home")!!, false)
-        } else {
-            prefs(context).edit().putString("alias", "none").apply() // forces the single icon back on
-            applyDrawerIcon(context, style, main, second)
-            TAB_ALIASES.forEach { set(it, false) }
-        }
+        applyDrawerIcons(context, style, main, second)
     }
 
-    fun applyDrawerIcon(context: Context, style: IconStyle, main: Int, second: Int) {
-        if (threeIcons(context)) return
+    /** Shows the right icons in the app drawer, each as close as possible to your style and colors. */
+    fun applyDrawerIcons(context: Context, style: IconStyle, main: Int, second: Int) {
+        val three = threeIcons(context)
         val isDefault = style == IconStyle.A && main == DEFAULT_MAIN && second == DEFAULT_SECOND
-        val wanted = if (isDefault) ".Home" else presets(context).filter { it.style == style }
-            .minBy { distance(it.main, main) * 2 + distance(it.second, second) }.alias
-        val prefs = prefs(context)
-        val current = prefs.getString("alias", ".Home")!!
-        if (current == wanted && isEnabled(context, wanted)) return
         val pm = context.packageManager
-        // Turn on the new one first so the app never has zero launcher icons.
-        runCatching { pm.setComponentEnabledSetting(ComponentName(context, context.packageName + wanted), PackageManager.COMPONENT_ENABLED_STATE_ENABLED, PackageManager.DONT_KILL_APP) }
-        if (current != wanted && current != "none") {
-            runCatching { pm.setComponentEnabledSetting(ComponentName(context, context.packageName + current), PackageManager.COMPONENT_ENABLED_STATE_DISABLED, PackageManager.DONT_KILL_APP) }
+        val p = prefs(context)
+        IconGlyph.entries.forEach { g ->
+            val active = if (three) g != IconGlyph.Main else g == IconGlyph.Main
+            val wanted = when {
+                !active -> null
+                isDefault -> g.defaultAlias
+                else -> presets(context).filter { it.glyph == g.key && it.style == style }
+                    .minBy { distance(it.main, main) * 2 + distance(it.second, second) }.alias
+            }
+            // The main icon starts enabled; the others start disabled.
+            val current = p.getString("alias_${g.key}", if (g == IconGlyph.Main) g.defaultAlias else null)
+            if (wanted == current && (wanted == null || isEnabled(context, wanted, g))) return@forEach
+            // Turn the new icon on before the old one off, so the app is never missing from the drawer.
+            if (wanted != null) set(pm, context, wanted, true)
+            if (current != null && current != wanted) set(pm, context, current, false)
+            // Earlier versions only had the plain tab icons; turn those off when a styled one replaces them.
+            if (current == null && g != IconGlyph.Main && wanted != g.defaultAlias) set(pm, context, g.defaultAlias, false)
+            p.edit().putString("alias_${g.key}", wanted).apply()
         }
-        prefs.edit().putString("alias", wanted).apply()
     }
 
-    private fun isEnabled(context: Context, alias: String): Boolean {
+    private fun set(pm: PackageManager, context: Context, alias: String, on: Boolean) = runCatching {
+        pm.setComponentEnabledSetting(
+            ComponentName(context, context.packageName + alias),
+            if (on) PackageManager.COMPONENT_ENABLED_STATE_ENABLED else PackageManager.COMPONENT_ENABLED_STATE_DISABLED,
+            PackageManager.DONT_KILL_APP,
+        )
+    }
+
+    private fun isEnabled(context: Context, alias: String, g: IconGlyph): Boolean {
         val state = context.packageManager.getComponentEnabledSetting(ComponentName(context, context.packageName + alias))
-        return state == PackageManager.COMPONENT_ENABLED_STATE_ENABLED || (alias == ".Home" && state == PackageManager.COMPONENT_ENABLED_STATE_DEFAULT)
+        return state == PackageManager.COMPONENT_ENABLED_STATE_ENABLED ||
+            (alias == IconGlyph.Main.defaultAlias && g == IconGlyph.Main && state == PackageManager.COMPONENT_ENABLED_STATE_DEFAULT)
     }
 
-    /** Adds the home-screen shortcut in your exact colors, or updates it if it's already there. */
-    fun pinOrUpdateShortcut(context: Context, style: IconStyle, main: Int, second: Int, ask: Boolean): Boolean {
-        val info = ShortcutInfoCompat.Builder(context, SHORTCUT_ID)
-            .setShortLabel("Communications")
-            .setIcon(IconCompat.createWithAdaptiveBitmap(render(context, style, main, second)))
-            .setIntent(Intent(context, MainActivity::class.java).setAction(Intent.ACTION_MAIN))
+    /** Adds a home-screen shortcut in your exact colors, or updates it if it's already there. */
+    fun pinOrUpdateShortcut(context: Context, glyph: IconGlyph, style: IconStyle, main: Int, second: Int, ask: Boolean): Boolean {
+        val intent = Intent(context, MainActivity::class.java).setAction(if (glyph.tab == null) Intent.ACTION_MAIN else MainActivity.ACTION_OPEN_TAB)
+        glyph.tab?.let { intent.putExtra(MainActivity.EXTRA_TAB, it) }
+        val info = ShortcutInfoCompat.Builder(context, "icon_${glyph.key}")
+            .setShortLabel(glyph.label)
+            .setIcon(IconCompat.createWithAdaptiveBitmap(render(context, glyph, style, main, second)))
+            .setIntent(intent)
             .build()
         val pinned = runCatching {
-            ShortcutManagerCompat.getShortcuts(context, ShortcutManagerCompat.FLAG_MATCH_PINNED).any { it.id == SHORTCUT_ID }
+            ShortcutManagerCompat.getShortcuts(context, ShortcutManagerCompat.FLAG_MATCH_PINNED).any { it.id == info.id }
         }.getOrDefault(false)
         if (pinned) return runCatching { ShortcutManagerCompat.updateShortcuts(context, listOf(info)) }.getOrDefault(false)
         if (!ask || !ShortcutManagerCompat.isRequestPinShortcutSupported(context)) return false
         return runCatching { ShortcutManagerCompat.requestPinShortcut(context, info, null) }.getOrDefault(false)
     }
 
-    /** Draws the icon at adaptive-icon size (the launcher crops it to its own shape). */
-    fun render(context: Context, style: IconStyle, main: Int, second: Int, size: Int = 432): Bitmap {
+    /** Updates every home-screen shortcut you've already added, after a style or color change. */
+    fun updatePinnedShortcuts(context: Context, style: IconStyle, main: Int, second: Int) {
+        IconGlyph.entries.forEach { pinOrUpdateShortcut(context, it, style, main, second, ask = false) }
+    }
+
+    /** Draws an icon at adaptive-icon size (the launcher crops it to its own shape). */
+    fun render(context: Context, glyph: IconGlyph, style: IconStyle, main: Int, second: Int, size: Int = 432): Bitmap {
         val bg = if (style == IconStyle.A) second else main
         val fg = if (style == IconStyle.A) main else second
         val bmp = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888)
@@ -122,9 +133,12 @@ object AppIcon {
         } else {
             layer(R.drawable.icon_layer_ring, fg)
         }
-        layer(R.drawable.icon_layer_book, fg)
-        layer(R.drawable.icon_layer_window, bg)
-        layer(R.drawable.icon_layer_handset, fg)
+        when (glyph) {
+            IconGlyph.Main -> { layer(R.drawable.icon_layer_book, fg); layer(R.drawable.icon_layer_window, bg); layer(R.drawable.icon_layer_handset, fg) }
+            IconGlyph.Contacts -> { layer(R.drawable.icon_layer_book, fg); layer(R.drawable.icon_layer_window, bg); layer(R.drawable.icon_layer_person, fg) }
+            IconGlyph.Messages -> { layer(R.drawable.icon_layer_bubble, fg); layer(R.drawable.icon_layer_dots, bg) }
+            IconGlyph.Calls -> layer(R.drawable.icon_layer_bighandset, fg)
+        }
         if (style == IconStyle.C) canvas.restore()
         return bmp
     }

@@ -31,13 +31,23 @@ jobs:
             echo "::error::The KEYSTORE_BASE64 secret is missing. Add it under Settings > Secrets and variables > Actions."
             exit 1
           fi
-          echo "$KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/release.jks"
+          # Remove spaces, line breaks and a pasted label, which copying on Windows can add.
+          printf '%s' "$KEYSTORE_BASE64" | sed 's/KEYSTORE_BASE64//g' | tr -d ' \r\n\t' | base64 -d > "$RUNNER_TEMP/release.jks"
           echo "SIGNING_STORE_FILE=$RUNNER_TEMP/release.jks" >> "$GITHUB_ENV"
 
-      - name: Build the APK
+      - name: Check the signing key and password
         env:
           SIGNING_STORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
-          SIGNING_KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+        run: |
+          PW=$(printf '%s' "$SIGNING_STORE_PASSWORD" | tr -d ' \r\n\t')
+          if ! keytool -list -keystore "$SIGNING_STORE_FILE" -storepass "$PW" > /dev/null; then
+            echo "::error::The key or KEYSTORE_PASSWORD secret doesn't match. Paste both again from github-secrets.txt."
+            exit 1
+          fi
+          echo "SIGNING_STORE_PASSWORD=$PW" >> "$GITHUB_ENV"
+          echo "SIGNING_KEY_ALIAS=$(printf '%s' "${{ secrets.KEY_ALIAS }}" | tr -d ' \r\n\t')" >> "$GITHUB_ENV"
+
+      - name: Build the APK
         run: |
           chmod +x gradlew
           ./gradlew assembleRelease -PbuildNumber=${{ github.run_number }} --no-daemon

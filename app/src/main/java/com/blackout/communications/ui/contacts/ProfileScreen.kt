@@ -36,6 +36,9 @@ import androidx.compose.material.icons.outlined.Phone
 import androidx.compose.material.icons.outlined.StarOutline
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.Stop
+import androidx.compose.foundation.layout.Box
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -82,6 +85,8 @@ fun ProfileScreen(
     val context = LocalContext.current
     val data by remember(contactId) { vm.contact(contactId) }.collectAsState(initial = null)
     val owners by vm.speedDialOwners.collectAsStateWithLifecycle()
+    val previewing by RingtonePreview.playing.collectAsStateWithLifecycle()
+    androidx.compose.runtime.DisposableEffect(Unit) { onDispose { RingtonePreview.stop() } }
     val c = data ?: return
 
     var menu by remember { mutableStateOf(false) }
@@ -154,7 +159,22 @@ fun ProfileScreen(
 
             // Ringtone, speed dial, group, favorite
             InfoCard {
-                ProfileRow(Icons.Outlined.MusicNote, "Ringtone", c.contact.ringtoneName?.let { "$it · from your music" } ?: "Default ringtone", chevron = true) { ringtoneDialog = true }
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Box(Modifier.weight(1f)) {
+                        ProfileRow(Icons.Outlined.MusicNote, "Ringtone", c.contact.ringtoneName?.let { "$it · saved" } ?: "Default ringtone", chevron = c.contact.ringtonePath == null) { ringtoneDialog = true }
+                    }
+                    if (c.contact.ringtonePath != null) {
+                        IconButton(onClick = { RingtonePreview.toggle(context, c.contact.ringtonePath) }) {
+                            Icon(if (previewing) Icons.Filled.Stop else Icons.Filled.PlayArrow, if (previewing) "Stop" else "Play ringtone", tint = AppColors.Accent)
+                        }
+                    }
+                }
+                if (c.contact.ringtonePath != null && !Phone.isDefaultPhoneApp(context)) {
+                    Text(
+                        "This ringtone plays only when Communications is your phone app. Set it in the Calls tab.",
+                        color = AppColors.Missed, fontSize = 12.sp, modifier = Modifier.padding(start = 50.dp, end = 16.dp, bottom = 10.dp),
+                    )
+                }
                 HorizontalDivider(color = AppColors.Line)
                 val key = c.contact.speedDial
                 ProfileRow(Icons.Outlined.Dialpad, "Speed dial", if (key != null) "Hold $key on the dialpad to call" else "Not set", value = key?.toString(), chevron = true) { speedDialDialog = true }
@@ -306,5 +326,42 @@ private fun launch(context: Context, intent: Intent) {
         context.startActivity(intent)
     } catch (e: ActivityNotFoundException) {
         Toast.makeText(context, "No app found to do that", Toast.LENGTH_SHORT).show()
+    }
+}
+
+/** Plays a contact's saved ringtone so you can check it, for up to 15 seconds. */
+object RingtonePreview {
+    val playing = kotlinx.coroutines.flow.MutableStateFlow(false)
+    private var player: android.media.MediaPlayer? = null
+    private val handler = android.os.Handler(android.os.Looper.getMainLooper())
+
+    fun toggle(context: Context, path: String?) {
+        if (player != null) { stop(); return }
+        val file = path?.let { java.io.File(it) }
+        if (file == null || !file.exists()) {
+            Toast.makeText(context, "The saved ringtone is missing. Pick the song again.", Toast.LENGTH_LONG).show()
+            return
+        }
+        player = runCatching {
+            android.media.MediaPlayer().apply {
+                setDataSource(file.absolutePath)
+                setOnCompletionListener { stop() }
+                prepare()
+                start()
+            }
+        }.getOrNull()
+        if (player == null) {
+            Toast.makeText(context, "This file can't be played. Try another song.", Toast.LENGTH_LONG).show()
+            return
+        }
+        playing.value = true
+        handler.postDelayed({ stop() }, 15_000)
+    }
+
+    fun stop() {
+        handler.removeCallbacksAndMessages(null)
+        player?.runCatching { stop(); release() }
+        player = null
+        playing.value = false
     }
 }

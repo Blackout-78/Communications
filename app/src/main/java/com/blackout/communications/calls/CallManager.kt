@@ -78,6 +78,9 @@ object CallManager {
         refresh()
     }
 
+    /** The contact who is calling on [number], if known. */
+    fun callerFor(number: String?): ContactWithNumbers? = callers[Phone.matchKey(number)]
+
     fun setAudio(state: CallAudioState?) {
         _audio.value = state
     }

@@ -1,6 +1,6 @@
 # Communications
 
-One Android app for your **contacts, calls and texts**, fully offline and private.
+An Android-only app for your **contacts, calls and texts**, fully offline and private.
 
 - **No internet permission.** Android itself blocks the app from going online.
 - **No ads, tracking, analytics or accounts.**
@@ -49,7 +49,9 @@ These are design previews. The finished app follows this look.
 - [ ] **Stage 3:** Chats (becomes your texting app)
 - [ ] **Stage 4:** Settings and backup
 
-## Build it (Windows)
+## Build it
+
+Communications runs on Android phones only. You build it on a computer (these steps use Windows), then install it on your phone.
 
 1. Install [Android Studio](https://developer.android.com/studio).
 2. Download this repo: click **Code**, then **Download ZIP**, and unzip it.
@@ -58,7 +60,7 @@ These are design previews. The finished app follows this look.
 5. Plug in your phone with USB debugging on, or start an emulator.
 6. Click the green **Run** button.
 
-Needs Android 10 or newer.
+Your phone needs Android 10 or newer.
 
 ## License
 

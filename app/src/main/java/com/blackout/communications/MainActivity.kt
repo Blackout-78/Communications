@@ -6,12 +6,20 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.runtime.mutableStateOf
+import com.blackout.communications.chats.MessageNotifications
 import com.blackout.communications.ui.AppRoot
 import com.blackout.communications.ui.theme.CommunicationsTheme
 
+/** Something another app, a notification or a call asked to open. */
+sealed interface LaunchRequest {
+    data class Dial(val number: String) : LaunchRequest
+    data class Thread(val id: Long) : LaunchRequest
+    data class Compose(val address: String, val text: String) : LaunchRequest
+    data class Contact(val id: Long) : LaunchRequest
+}
+
 class MainActivity : ComponentActivity() {
-    /** A number to show on the dialpad, from a tel: link or "Add call". */
-    private val dialRequest = mutableStateOf<String?>(null)
+    private val request = mutableStateOf<LaunchRequest?>(null)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -19,7 +27,7 @@ class MainActivity : ComponentActivity() {
         if (savedInstanceState == null) handle(intent)
         setContent {
             CommunicationsTheme {
-                AppRoot(dialRequest = dialRequest.value, onDialHandled = { dialRequest.value = null })
+                AppRoot(request = request.value, onRequestHandled = { request.value = null })
             }
         }
     }
@@ -30,16 +38,31 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun handle(intent: Intent?) {
-        when (intent?.action) {
-            Intent.ACTION_DIAL, Intent.ACTION_VIEW -> {
-                val data = intent.data
-                if (data == null || data.scheme == "tel") dialRequest.value = data?.schemeSpecificPart.orEmpty()
+        intent ?: return
+        val data = intent.data
+        val scheme = data?.scheme
+        request.value = when (intent.action) {
+            ACTION_ADD_CALL -> LaunchRequest.Dial("")
+            ACTION_OPEN_THREAD -> intent.getLongExtra(MessageNotifications.EXTRA_THREAD, -1).takeIf { it >= 0 }?.let { LaunchRequest.Thread(it) }
+            ACTION_OPEN_CONTACT -> intent.getLongExtra(EXTRA_CONTACT, -1).takeIf { it >= 0 }?.let { LaunchRequest.Contact(it) }
+            Intent.ACTION_DIAL -> LaunchRequest.Dial(if (scheme == "tel") data.schemeSpecificPart.orEmpty() else "")
+            Intent.ACTION_VIEW, Intent.ACTION_SENDTO, Intent.ACTION_SEND -> when (scheme) {
+                "tel" -> LaunchRequest.Dial(data.schemeSpecificPart.orEmpty())
+                "sms", "smsto", "mms", "mmsto" -> {
+                    val address = data.schemeSpecificPart.orEmpty().substringBefore('?').split(',', ';').first().trim()
+                    val text = intent.getStringExtra(Intent.EXTRA_TEXT) ?: intent.getStringExtra("sms_body") ?: ""
+                    if (address.isNotBlank()) LaunchRequest.Compose(address, text) else null
+                }
+                else -> null
             }
-            ACTION_ADD_CALL -> dialRequest.value = ""
-        }
+            else -> null
+        } ?: request.value
     }
 
     companion object {
         const val ACTION_ADD_CALL = "com.blackout.communications.ADD_CALL"
+        const val ACTION_OPEN_THREAD = "com.blackout.communications.OPEN_THREAD"
+        const val ACTION_OPEN_CONTACT = "com.blackout.communications.OPEN_CONTACT"
+        const val EXTRA_CONTACT = "contact_id"
     }
 }

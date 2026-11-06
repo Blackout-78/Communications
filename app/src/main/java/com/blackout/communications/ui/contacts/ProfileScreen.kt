@@ -74,6 +74,7 @@ import com.blackout.communications.ui.theme.AppColors
 fun ProfileScreen(
     vm: ContactsViewModel,
     contactId: Long,
+    onMessage: (String) -> Unit,
     onBack: () -> Unit,
     onEdit: () -> Unit,
     onOpenHistory: () -> Unit,
@@ -130,7 +131,7 @@ fun ProfileScreen(
                     main?.let { dial(context, it.number) }
                 }
                 BigButton("Message", Icons.Outlined.ChatBubbleOutline, primary = false, enabled = main != null, modifier = Modifier.weight(1f)) {
-                    main?.let { message(context, it.number) }
+                    main?.let { onMessage(it.number) }
                 }
             }
 
@@ -144,7 +145,7 @@ fun ProfileScreen(
                                 Text(formatNumber(n.number), fontSize = 16.sp)
                                 Text(if (n.isMain) "${n.label} · Main" else n.label, color = AppColors.SubText, fontSize = 13.sp)
                             }
-                            IconButton(onClick = { message(context, n.number) }) { Icon(Icons.Outlined.ChatBubbleOutline, "Message ${n.number}", tint = AppColors.Accent) }
+                            IconButton(onClick = { onMessage(n.number) }) { Icon(Icons.Outlined.ChatBubbleOutline, "Message ${n.number}", tint = AppColors.Accent) }
                             IconButton(onClick = { dial(context, n.number) }) { Icon(Icons.Outlined.Phone, "Call ${n.number}", tint = AppColors.Accent) }
                         }
                     }

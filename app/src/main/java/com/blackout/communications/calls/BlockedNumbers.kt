@@ -13,7 +13,7 @@ object BlockedNumbers {
 
     fun canUse(context: Context): Boolean =
         runCatching { BlockedNumberContract.canCurrentUserBlockNumbers(context) }.getOrDefault(false) &&
-            Phone.isDefaultPhoneApp(context)
+            (Phone.isDefaultPhoneApp(context) || android.provider.Telephony.Sms.getDefaultSmsPackage(context) == context.packageName)
 
     fun list(context: Context): List<Pair<Long, String>> = runCatching {
         context.contentResolver.query(

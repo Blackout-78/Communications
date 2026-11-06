@@ -1,6 +1,7 @@
 package com.blackout.communications
 
 import android.app.Application
+import com.blackout.communications.chats.ChatPrefs
 import com.blackout.communications.data.AppDatabase
 import com.blackout.communications.data.CallSettings
 import com.blackout.communications.data.ContactRepository
@@ -11,4 +12,5 @@ class CommunicationsApp : Application() {
     val fileStore: FileStore by lazy { FileStore(this) }
     val contacts: ContactRepository by lazy { ContactRepository(database.contactDao(), fileStore) }
     val callSettings: CallSettings by lazy { CallSettings(this) }
+    val chatPrefs: ChatPrefs by lazy { ChatPrefs(this) }
 }

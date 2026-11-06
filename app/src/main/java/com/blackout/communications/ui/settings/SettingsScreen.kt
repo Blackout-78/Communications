@@ -7,6 +7,7 @@ import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -18,6 +19,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -45,6 +48,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -55,6 +59,7 @@ import com.blackout.communications.backup.Backup
 import com.blackout.communications.backup.BackupReminder
 import com.blackout.communications.data.Appearance
 import com.blackout.communications.data.ColorSlot
+import com.blackout.communications.data.IconStyle
 import com.blackout.communications.data.Palette
 import com.blackout.communications.data.StartTab
 import com.blackout.communications.data.TextSize
@@ -92,7 +97,7 @@ fun SettingsScreen(
     var startDialog by remember { mutableStateOf(false) }
     var editTab by remember { mutableStateOf("Contacts") }
     var pickSlot by remember { mutableStateOf<ColorSlot?>(null) }
-    var pickIcon by remember { mutableStateOf(false) }
+    var pickIcon by remember { mutableStateOf(0) } // 1 = main color, 2 = second color
     var pictureFor by remember { mutableStateOf<String?>(null) }
     var busy by remember { mutableStateOf(false) }
     var lastBackup by remember { mutableStateOf(BackupReminder.lastBackup(context)) }
@@ -187,18 +192,62 @@ fun SettingsScreen(
 
         // ------------------------------------------------ 2. App icon
         Section("App icon") {
-            Row(Modifier.fillMaxWidth().clickable { pickIcon = true }.heightIn(min = 56.dp).padding(horizontal = 16.dp, vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+            // Live preview of your icon, as it will look on the home screen.
+            val preview = remember(a.iconStyle, a.iconColor, a.iconColor2) {
+                AppIcon.render(context, a.iconStyle, a.iconColor, a.iconColor2, 288).asImageBitmap()
+            }
+            Row(Modifier.fillMaxWidth().padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
+                Image(preview, "Your app icon", modifier = Modifier.size(84.dp).clip(CircleShape))
+                Column(Modifier.padding(start = 16.dp)) {
+                    Text("Style ${a.iconStyle.name} · ${a.iconStyle.label}", fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
+                    Text(a.iconStyle.description, fontSize = 13.sp, color = AppColors.SubText)
+                }
+            }
+            Divider()
+            Text("Style", fontSize = 15.sp, modifier = Modifier.padding(start = 16.dp, top = 12.dp))
+            Row(Modifier.fillMaxWidth().padding(12.dp), horizontalArrangement = Arrangement.SpaceEvenly) {
+                IconStyle.entries.forEach { st ->
+                    val img = remember(st, a.iconColor, a.iconColor2) { AppIcon.render(context, st, a.iconColor, a.iconColor2, 168).asImageBitmap() }
+                    val selected = st == a.iconStyle
+                    Column(
+                        Modifier.clip(RoundedCornerShape(12.dp))
+                            .background(if (selected) AppColors.Accent.copy(alpha = 0.18f) else Color.Transparent)
+                            .clickable { setIcon(context, app, a.copy(iconStyle = st)) }
+                            .padding(10.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                    ) {
+                        Image(img, "Style ${st.name}", modifier = Modifier.size(56.dp).clip(CircleShape))
+                        Text("${st.name} · ${st.label}", fontSize = 12.sp, color = if (selected) AppColors.Accent else AppColors.SubText, modifier = Modifier.padding(top = 6.dp))
+                    }
+                }
+            }
+            Divider()
+            Row(Modifier.fillMaxWidth().clickable { pickIcon = 1 }.heightIn(min = 56.dp).padding(horizontal = 16.dp, vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
                 Column(Modifier.weight(1f)) {
-                    Text("Icon color", fontSize = 15.sp)
-                    Text("Any color for the home-screen shortcut. The app drawer uses the closest of 36 colors.", fontSize = 12.sp, color = AppColors.SubText)
+                    Text("Main color", fontSize = 15.sp)
+                    Text("Color wheel", fontSize = 12.sp, color = AppColors.SubText)
                 }
                 Swatch(Color(a.iconColor))
             }
             Divider()
-            Row1("Add colored icon to home screen", null) {
-                if (!AppIcon.pinOrUpdateShortcut(context, a.iconColor, ask = true)) {
+            Row(Modifier.fillMaxWidth().clickable { pickIcon = 2 }.heightIn(min = 56.dp).padding(horizontal = 16.dp, vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+                Column(Modifier.weight(1f)) {
+                    Text("Second color", fontSize = 15.sp)
+                    Text("Color wheel", fontSize = 12.sp, color = AppColors.SubText)
+                }
+                Swatch(Color(a.iconColor2))
+            }
+            Divider()
+            Row1("Add this icon to home screen", null, "Uses your exact colors. The app drawer uses the closest of 24 designs.") {
+                if (!AppIcon.pinOrUpdateShortcut(context, a.iconStyle, a.iconColor, a.iconColor2, ask = true)) {
                     Toast.makeText(context, "Your home screen doesn't allow adding shortcuts", Toast.LENGTH_SHORT).show()
                 }
+            }
+            Divider()
+            Row(Modifier.fillMaxWidth().clickable {
+                setIcon(context, app, a.copy(iconStyle = IconStyle.A, iconColor = AppIcon.DEFAULT_MAIN, iconColor2 = AppIcon.DEFAULT_SECOND))
+            }.heightIn(min = 52.dp).padding(horizontal = 16.dp), verticalAlignment = Alignment.CenterVertically) {
+                Text("Reset to original icon", color = AppColors.Accent, fontSize = 15.sp)
             }
         }
 
@@ -292,27 +341,31 @@ fun SettingsScreen(
             onReset = { set(null); pickSlot = null },
         )
     }
-    if (pickIcon) {
+    if (pickIcon != 0) {
+        val main = pickIcon == 1
         ColorPickerDialog(
-            title = "Icon color",
-            initial = a.iconColor,
+            title = if (main) "Icon main color" else "Icon second color",
+            initial = if (main) a.iconColor else a.iconColor2,
             onPick = { color ->
-                pickIcon = false
-                update { it.copy(iconColor = color) }
-                AppIcon.applyDrawerIcon(context, color)
-                AppIcon.pinOrUpdateShortcut(context, color, ask = true)
+                pickIcon = 0
+                setIcon(context, app, if (main) a.copy(iconColor = color) else a.copy(iconColor2 = color))
                 Toast.makeText(context, "Icon updated. Your home screen may take a moment to refresh.", Toast.LENGTH_LONG).show()
             },
-            onDismiss = { pickIcon = false },
-            resetLabel = "Original blue",
+            onDismiss = { pickIcon = 0 },
+            resetLabel = "Original",
             onReset = {
-                pickIcon = false
-                update { it.copy(iconColor = AppIcon.DEFAULT_COLOR) }
-                AppIcon.applyDrawerIcon(context, AppIcon.DEFAULT_COLOR)
-                AppIcon.pinOrUpdateShortcut(context, AppIcon.DEFAULT_COLOR, ask = false)
+                pickIcon = 0
+                setIcon(context, app, if (main) a.copy(iconColor = AppIcon.DEFAULT_MAIN) else a.copy(iconColor2 = AppIcon.DEFAULT_SECOND))
             },
         )
     }
+}
+
+/** Saves the icon choice and updates the app drawer icon and home-screen shortcut. */
+private fun setIcon(context: android.content.Context, app: CommunicationsApp, next: Appearance) {
+    app.updateAppearance { it.copy(iconStyle = next.iconStyle, iconColor = next.iconColor, iconColor2 = next.iconColor2) }
+    AppIcon.applyDrawerIcon(context, next.iconStyle, next.iconColor, next.iconColor2)
+    AppIcon.pinOrUpdateShortcut(context, next.iconStyle, next.iconColor, next.iconColor2, ask = false)
 }
 
 private fun themeColor(slot: ColorSlot): Color = when (slot) {

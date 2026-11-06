@@ -12,41 +12,46 @@ import androidx.core.content.pm.ShortcutManagerCompat
 import androidx.core.graphics.drawable.IconCompat
 import com.blackout.communications.MainActivity
 import com.blackout.communications.R
+import com.blackout.communications.data.IconStyle
 
 /**
- * App icon color.
- * - Home-screen shortcut: drawn in exactly the color you pick, updated in place when you change it.
- * - App drawer icon: Android only allows ready-made icons, so it switches to the closest of 36 colors.
+ * The app icon: a style (A, B or C) and two colors you pick.
+ * - Home-screen shortcut: drawn in exactly your two colors, updated in place when you change them.
+ * - App drawer icon: Android only allows ready-made icons, so it switches to the closest of 24 designs.
  */
 object AppIcon {
     private const val SHORTCUT_ID = "colored_icon"
-    const val DEFAULT_COLOR = 0xFF377DC0.toInt()
+    const val DEFAULT_MAIN = 0xFF377DC0.toInt()
+    const val DEFAULT_SECOND = 0xFFFFFFFF.toInt()
 
-    fun presets(context: Context): IntArray =
-        context.resources.getStringArray(R.array.icon_presets).map { android.graphics.Color.parseColor(it) }.toIntArray()
+    private data class Preset(val style: IconStyle, val main: Int, val second: Int, val alias: String)
 
-    /** Sets the app drawer icon to the preset closest to [color]. Returns the preset used. */
-    fun applyDrawerIcon(context: Context, color: Int): Int {
-        val presets = presets(context)
-        val best = if (color == DEFAULT_COLOR) -1 else presets.indices.minBy { distance(presets[it], color) }
+    private fun presets(context: Context): List<Preset> =
+        context.resources.getStringArray(R.array.icon_presets).mapIndexed { i, line ->
+            val (s, m, c) = line.split("|")
+            Preset(IconStyle.valueOf(s), android.graphics.Color.parseColor(m), android.graphics.Color.parseColor(c), ".Icon$s${i % 8 + 1}")
+        }
+
+    /** Sets the app drawer icon to the closest ready-made design. */
+    fun applyDrawerIcon(context: Context, style: IconStyle, main: Int, second: Int) {
+        val all = presets(context)
+        val isDefault = style == IconStyle.A && main == DEFAULT_MAIN && second == DEFAULT_SECOND
+        val wanted = if (isDefault) ".Launcher" else all.filter { it.style == style }
+            .minBy { distance(it.main, main) + distance(it.second, second) }.alias
         val pm = context.packageManager
-        val wanted = if (best < 0) ".Launcher" else ".IconC%02d".format(best)
-        val names = listOf(".Launcher") + presets.indices.map { ".IconC%02d".format(it) }
+        val names = listOf(".Launcher") + all.map { it.alias }
         // Turn on the new one first so the app never has zero launcher icons.
         names.sortedBy { if (it == wanted) 0 else 1 }.forEach { name ->
             val state = if (name == wanted) PackageManager.COMPONENT_ENABLED_STATE_ENABLED else PackageManager.COMPONENT_ENABLED_STATE_DISABLED
-            runCatching {
-                pm.setComponentEnabledSetting(ComponentName(context, context.packageName + name), state, PackageManager.DONT_KILL_APP)
-            }
+            runCatching { pm.setComponentEnabledSetting(ComponentName(context, context.packageName + name), state, PackageManager.DONT_KILL_APP) }
         }
-        return if (best < 0) DEFAULT_COLOR else presets[best]
     }
 
-    /** Adds the home-screen shortcut in the exact color, or updates it if it's already there. */
-    fun pinOrUpdateShortcut(context: Context, color: Int, ask: Boolean): Boolean {
+    /** Adds the home-screen shortcut in your exact colors, or updates it if it's already there. */
+    fun pinOrUpdateShortcut(context: Context, style: IconStyle, main: Int, second: Int, ask: Boolean): Boolean {
         val info = ShortcutInfoCompat.Builder(context, SHORTCUT_ID)
             .setShortLabel("Communications")
-            .setIcon(IconCompat.createWithAdaptiveBitmap(render(context, color)))
+            .setIcon(IconCompat.createWithAdaptiveBitmap(render(context, style, main, second)))
             .setIntent(Intent(context, MainActivity::class.java).setAction(Intent.ACTION_MAIN))
             .build()
         val pinned = runCatching {
@@ -57,19 +62,28 @@ object AppIcon {
         return runCatching { ShortcutManagerCompat.requestPinShortcut(context, info, null) }.getOrDefault(false)
     }
 
-    /** Draws the icon (white background, colored phone book) at adaptive-icon size. */
-    fun render(context: Context, color: Int, size: Int = 432): Bitmap {
+    /** Draws the icon at adaptive-icon size (the launcher crops it to its own shape). */
+    fun render(context: Context, style: IconStyle, main: Int, second: Int, size: Int = 432): Bitmap {
+        val bg = if (style == IconStyle.A) second else main
+        val fg = if (style == IconStyle.A) main else second
         val bmp = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888)
         val canvas = Canvas(bmp)
-        canvas.drawColor(android.graphics.Color.WHITE)
-        listOf(R.drawable.icon_layer_body to color, R.drawable.icon_layer_window to android.graphics.Color.WHITE, R.drawable.icon_layer_handset to color)
-            .forEach { (res, tint) ->
-                ContextCompat.getDrawable(context, res)?.mutate()?.apply {
-                    setBounds(0, 0, size, size)
-                    setTint(tint)
-                    draw(canvas)
-                }
+        canvas.drawColor(bg)
+        fun layer(res: Int, tint: Int) {
+            ContextCompat.getDrawable(context, res)?.mutate()?.apply {
+                setBounds(0, 0, size, size); setTint(tint); draw(canvas)
             }
+        }
+        if (style == IconStyle.C) {
+            canvas.save()
+            canvas.scale(1.35f, 1.35f, size / 2f, size / 2f)
+        } else {
+            layer(R.drawable.icon_layer_ring, fg)
+        }
+        layer(R.drawable.icon_layer_book, fg)
+        layer(R.drawable.icon_layer_window, bg)
+        layer(R.drawable.icon_layer_handset, fg)
+        if (style == IconStyle.C) canvas.restore()
         return bmp
     }
 

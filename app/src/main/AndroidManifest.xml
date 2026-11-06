@@ -176,11 +176,11 @@
             </intent-filter>
         </activity-alias>
         <activity-alias
-            android:name=".IconC00"
+            android:name=".IconA1"
             android:enabled="false"
             android:exported="true"
-            android:icon="@mipmap/ic_launcher_c00"
-            android:roundIcon="@mipmap/ic_launcher_c00"
+            android:icon="@mipmap/ic_launcher_a1"
+            android:roundIcon="@mipmap/ic_launcher_a1"
             android:targetActivity=".MainActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -188,11 +188,11 @@
             </intent-filter>
         </activity-alias>
         <activity-alias
-            android:name=".IconC01"
+            android:name=".IconA2"
             android:enabled="false"
             android:exported="true"
-            android:icon="@mipmap/ic_launcher_c01"
-            android:roundIcon="@mipmap/ic_launcher_c01"
+            android:icon="@mipmap/ic_launcher_a2"
+            android:roundIcon="@mipmap/ic_launcher_a2"
             android:targetActivity=".MainActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -200,11 +200,11 @@
             </intent-filter>
         </activity-alias>
         <activity-alias
-            android:name=".IconC02"
+            android:name=".IconA3"
             android:enabled="false"
             android:exported="true"
-            android:icon="@mipmap/ic_launcher_c02"
-            android:roundIcon="@mipmap/ic_launcher_c02"
+            android:icon="@mipmap/ic_launcher_a3"
+            android:roundIcon="@mipmap/ic_launcher_a3"
             android:targetActivity=".MainActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -212,11 +212,11 @@
             </intent-filter>
         </activity-alias>
         <activity-alias
-            android:name=".IconC03"
+            android:name=".IconA4"
             android:enabled="false"
             android:exported="true"
-            android:icon="@mipmap/ic_launcher_c03"
-            android:roundIcon="@mipmap/ic_launcher_c03"
+            android:icon="@mipmap/ic_launcher_a4"
+            android:roundIcon="@mipmap/ic_launcher_a4"
             android:targetActivity=".MainActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -224,11 +224,11 @@
             </intent-filter>
         </activity-alias>
         <activity-alias
-            android:name=".IconC04"
+            android:name=".IconA5"
             android:enabled="false"
             android:exported="true"
-            android:icon="@mipmap/ic_launcher_c04"
-            android:roundIcon="@mipmap/ic_launcher_c04"
+            android:icon="@mipmap/ic_launcher_a5"
+            android:roundIcon="@mipmap/ic_launcher_a5"
             android:targetActivity=".MainActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -236,11 +236,11 @@
             </intent-filter>
         </activity-alias>
         <activity-alias
-            android:name=".IconC05"
+            android:name=".IconA6"
             android:enabled="false"
             android:exported="true"
-            android:icon="@mipmap/ic_launcher_c05"
-            android:roundIcon="@mipmap/ic_launcher_c05"
+            android:icon="@mipmap/ic_launcher_a6"
+            android:roundIcon="@mipmap/ic_launcher_a6"
             android:targetActivity=".MainActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -248,11 +248,11 @@
             </intent-filter>
         </activity-alias>
         <activity-alias
-            android:name=".IconC06"
+            android:name=".IconA7"
             android:enabled="false"
             android:exported="true"
-            android:icon="@mipmap/ic_launcher_c06"
-            android:roundIcon="@mipmap/ic_launcher_c06"
+            android:icon="@mipmap/ic_launcher_a7"
+            android:roundIcon="@mipmap/ic_launcher_a7"
             android:targetActivity=".MainActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -260,11 +260,11 @@
             </intent-filter>
         </activity-alias>
         <activity-alias
-            android:name=".IconC07"
+            android:name=".IconA8"
             android:enabled="false"
             android:exported="true"
-            android:icon="@mipmap/ic_launcher_c07"
-            android:roundIcon="@mipmap/ic_launcher_c07"
+            android:icon="@mipmap/ic_launcher_a8"
+            android:roundIcon="@mipmap/ic_launcher_a8"
             android:targetActivity=".MainActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -272,11 +272,11 @@
             </intent-filter>
         </activity-alias>
         <activity-alias
-            android:name=".IconC08"
+            android:name=".IconB1"
             android:enabled="false"
             android:exported="true"
-            android:icon="@mipmap/ic_launcher_c08"
-            android:roundIcon="@mipmap/ic_launcher_c08"
+            android:icon="@mipmap/ic_launcher_b1"
+            android:roundIcon="@mipmap/ic_launcher_b1"
             android:targetActivity=".MainActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -284,11 +284,11 @@
             </intent-filter>
         </activity-alias>
         <activity-alias
-            android:name=".IconC09"
+            android:name=".IconB2"
             android:enabled="false"
             android:exported="true"
-            android:icon="@mipmap/ic_launcher_c09"
-            android:roundIcon="@mipmap/ic_launcher_c09"
+            android:icon="@mipmap/ic_launcher_b2"
+            android:roundIcon="@mipmap/ic_launcher_b2"
             android:targetActivity=".MainActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -296,11 +296,11 @@
             </intent-filter>
         </activity-alias>
         <activity-alias
-            android:name=".IconC10"
+            android:name=".IconB3"
             android:enabled="false"
             android:exported="true"
-            android:icon="@mipmap/ic_launcher_c10"
-            android:roundIcon="@mipmap/ic_launcher_c10"
+            android:icon="@mipmap/ic_launcher_b3"
+            android:roundIcon="@mipmap/ic_launcher_b3"
             android:targetActivity=".MainActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -308,11 +308,11 @@
             </intent-filter>
         </activity-alias>
         <activity-alias
-            android:name=".IconC11"
+            android:name=".IconB4"
             android:enabled="false"
             android:exported="true"
-            android:icon="@mipmap/ic_launcher_c11"
-            android:roundIcon="@mipmap/ic_launcher_c11"
+            android:icon="@mipmap/ic_launcher_b4"
+            android:roundIcon="@mipmap/ic_launcher_b4"
             android:targetActivity=".MainActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -320,11 +320,11 @@
             </intent-filter>
         </activity-alias>
         <activity-alias
-            android:name=".IconC12"
+            android:name=".IconB5"
             android:enabled="false"
             android:exported="true"
-            android:icon="@mipmap/ic_launcher_c12"
-            android:roundIcon="@mipmap/ic_launcher_c12"
+            android:icon="@mipmap/ic_launcher_b5"
+            android:roundIcon="@mipmap/ic_launcher_b5"
             android:targetActivity=".MainActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -332,11 +332,11 @@
             </intent-filter>
         </activity-alias>
         <activity-alias
-            android:name=".IconC13"
+            android:name=".IconB6"
             android:enabled="false"
             android:exported="true"
-            android:icon="@mipmap/ic_launcher_c13"
-            android:roundIcon="@mipmap/ic_launcher_c13"
+            android:icon="@mipmap/ic_launcher_b6"
+            android:roundIcon="@mipmap/ic_launcher_b6"
             android:targetActivity=".MainActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -344,11 +344,11 @@
             </intent-filter>
         </activity-alias>
         <activity-alias
-            android:name=".IconC14"
+            android:name=".IconB7"
             android:enabled="false"
             android:exported="true"
-            android:icon="@mipmap/ic_launcher_c14"
-            android:roundIcon="@mipmap/ic_launcher_c14"
+            android:icon="@mipmap/ic_launcher_b7"
+            android:roundIcon="@mipmap/ic_launcher_b7"
             android:targetActivity=".MainActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -356,11 +356,11 @@
             </intent-filter>
         </activity-alias>
         <activity-alias
-            android:name=".IconC15"
+            android:name=".IconB8"
             android:enabled="false"
             android:exported="true"
-            android:icon="@mipmap/ic_launcher_c15"
-            android:roundIcon="@mipmap/ic_launcher_c15"
+            android:icon="@mipmap/ic_launcher_b8"
+            android:roundIcon="@mipmap/ic_launcher_b8"
             android:targetActivity=".MainActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -368,11 +368,11 @@
             </intent-filter>
         </activity-alias>
         <activity-alias
-            android:name=".IconC16"
+            android:name=".IconC1"
             android:enabled="false"
             android:exported="true"
-            android:icon="@mipmap/ic_launcher_c16"
-            android:roundIcon="@mipmap/ic_launcher_c16"
+            android:icon="@mipmap/ic_launcher_c1"
+            android:roundIcon="@mipmap/ic_launcher_c1"
             android:targetActivity=".MainActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -380,11 +380,11 @@
             </intent-filter>
         </activity-alias>
         <activity-alias
-            android:name=".IconC17"
+            android:name=".IconC2"
             android:enabled="false"
             android:exported="true"
-            android:icon="@mipmap/ic_launcher_c17"
-            android:roundIcon="@mipmap/ic_launcher_c17"
+            android:icon="@mipmap/ic_launcher_c2"
+            android:roundIcon="@mipmap/ic_launcher_c2"
             android:targetActivity=".MainActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -392,11 +392,11 @@
             </intent-filter>
         </activity-alias>
         <activity-alias
-            android:name=".IconC18"
+            android:name=".IconC3"
             android:enabled="false"
             android:exported="true"
-            android:icon="@mipmap/ic_launcher_c18"
-            android:roundIcon="@mipmap/ic_launcher_c18"
+            android:icon="@mipmap/ic_launcher_c3"
+            android:roundIcon="@mipmap/ic_launcher_c3"
             android:targetActivity=".MainActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -404,11 +404,11 @@
             </intent-filter>
         </activity-alias>
         <activity-alias
-            android:name=".IconC19"
+            android:name=".IconC4"
             android:enabled="false"
             android:exported="true"
-            android:icon="@mipmap/ic_launcher_c19"
-            android:roundIcon="@mipmap/ic_launcher_c19"
+            android:icon="@mipmap/ic_launcher_c4"
+            android:roundIcon="@mipmap/ic_launcher_c4"
             android:targetActivity=".MainActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -416,11 +416,11 @@
             </intent-filter>
         </activity-alias>
         <activity-alias
-            android:name=".IconC20"
+            android:name=".IconC5"
             android:enabled="false"
             android:exported="true"
-            android:icon="@mipmap/ic_launcher_c20"
-            android:roundIcon="@mipmap/ic_launcher_c20"
+            android:icon="@mipmap/ic_launcher_c5"
+            android:roundIcon="@mipmap/ic_launcher_c5"
             android:targetActivity=".MainActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -428,11 +428,11 @@
             </intent-filter>
         </activity-alias>
         <activity-alias
-            android:name=".IconC21"
+            android:name=".IconC6"
             android:enabled="false"
             android:exported="true"
-            android:icon="@mipmap/ic_launcher_c21"
-            android:roundIcon="@mipmap/ic_launcher_c21"
+            android:icon="@mipmap/ic_launcher_c6"
+            android:roundIcon="@mipmap/ic_launcher_c6"
             android:targetActivity=".MainActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -440,11 +440,11 @@
             </intent-filter>
         </activity-alias>
         <activity-alias
-            android:name=".IconC22"
+            android:name=".IconC7"
             android:enabled="false"
             android:exported="true"
-            android:icon="@mipmap/ic_launcher_c22"
-            android:roundIcon="@mipmap/ic_launcher_c22"
+            android:icon="@mipmap/ic_launcher_c7"
+            android:roundIcon="@mipmap/ic_launcher_c7"
             android:targetActivity=".MainActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -452,155 +452,11 @@
             </intent-filter>
         </activity-alias>
         <activity-alias
-            android:name=".IconC23"
+            android:name=".IconC8"
             android:enabled="false"
             android:exported="true"
-            android:icon="@mipmap/ic_launcher_c23"
-            android:roundIcon="@mipmap/ic_launcher_c23"
-            android:targetActivity=".MainActivity">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
-        </activity-alias>
-        <activity-alias
-            android:name=".IconC24"
-            android:enabled="false"
-            android:exported="true"
-            android:icon="@mipmap/ic_launcher_c24"
-            android:roundIcon="@mipmap/ic_launcher_c24"
-            android:targetActivity=".MainActivity">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
-        </activity-alias>
-        <activity-alias
-            android:name=".IconC25"
-            android:enabled="false"
-            android:exported="true"
-            android:icon="@mipmap/ic_launcher_c25"
-            android:roundIcon="@mipmap/ic_launcher_c25"
-            android:targetActivity=".MainActivity">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
-        </activity-alias>
-        <activity-alias
-            android:name=".IconC26"
-            android:enabled="false"
-            android:exported="true"
-            android:icon="@mipmap/ic_launcher_c26"
-            android:roundIcon="@mipmap/ic_launcher_c26"
-            android:targetActivity=".MainActivity">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
-        </activity-alias>
-        <activity-alias
-            android:name=".IconC27"
-            android:enabled="false"
-            android:exported="true"
-            android:icon="@mipmap/ic_launcher_c27"
-            android:roundIcon="@mipmap/ic_launcher_c27"
-            android:targetActivity=".MainActivity">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
-        </activity-alias>
-        <activity-alias
-            android:name=".IconC28"
-            android:enabled="false"
-            android:exported="true"
-            android:icon="@mipmap/ic_launcher_c28"
-            android:roundIcon="@mipmap/ic_launcher_c28"
-            android:targetActivity=".MainActivity">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
-        </activity-alias>
-        <activity-alias
-            android:name=".IconC29"
-            android:enabled="false"
-            android:exported="true"
-            android:icon="@mipmap/ic_launcher_c29"
-            android:roundIcon="@mipmap/ic_launcher_c29"
-            android:targetActivity=".MainActivity">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
-        </activity-alias>
-        <activity-alias
-            android:name=".IconC30"
-            android:enabled="false"
-            android:exported="true"
-            android:icon="@mipmap/ic_launcher_c30"
-            android:roundIcon="@mipmap/ic_launcher_c30"
-            android:targetActivity=".MainActivity">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
-        </activity-alias>
-        <activity-alias
-            android:name=".IconC31"
-            android:enabled="false"
-            android:exported="true"
-            android:icon="@mipmap/ic_launcher_c31"
-            android:roundIcon="@mipmap/ic_launcher_c31"
-            android:targetActivity=".MainActivity">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
-        </activity-alias>
-        <activity-alias
-            android:name=".IconC32"
-            android:enabled="false"
-            android:exported="true"
-            android:icon="@mipmap/ic_launcher_c32"
-            android:roundIcon="@mipmap/ic_launcher_c32"
-            android:targetActivity=".MainActivity">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
-        </activity-alias>
-        <activity-alias
-            android:name=".IconC33"
-            android:enabled="false"
-            android:exported="true"
-            android:icon="@mipmap/ic_launcher_c33"
-            android:roundIcon="@mipmap/ic_launcher_c33"
-            android:targetActivity=".MainActivity">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
-        </activity-alias>
-        <activity-alias
-            android:name=".IconC34"
-            android:enabled="false"
-            android:exported="true"
-            android:icon="@mipmap/ic_launcher_c34"
-            android:roundIcon="@mipmap/ic_launcher_c34"
-            android:targetActivity=".MainActivity">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
-        </activity-alias>
-        <activity-alias
-            android:name=".IconC35"
-            android:enabled="false"
-            android:exported="true"
-            android:icon="@mipmap/ic_launcher_c35"
-            android:roundIcon="@mipmap/ic_launcher_c35"
+            android:icon="@mipmap/ic_launcher_c8"
+            android:roundIcon="@mipmap/ic_launcher_c8"
             android:targetActivity=".MainActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

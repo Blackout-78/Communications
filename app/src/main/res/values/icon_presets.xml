@@ -1,42 +1,54 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- The 36 app drawer icon colors. Settings picks the closest to your color. -->
-    <array name="icon_presets">
-        <item>#FF377DC0</item>
-        <item>#FFC73838</item>
-        <item>#FFC75538</item>
-        <item>#FFC77338</item>
-        <item>#FFC79138</item>
-        <item>#FFC7AE38</item>
-        <item>#FFC2C738</item>
-        <item>#FFA4C738</item>
-        <item>#FF87C738</item>
-        <item>#FF69C738</item>
-        <item>#FF4BC738</item>
-        <item>#FF38C742</item>
-        <item>#FF38C75F</item>
-        <item>#FF38C77D</item>
-        <item>#FF38C79A</item>
-        <item>#FF38C7B8</item>
-        <item>#FF38B8C7</item>
-        <item>#FF389AC7</item>
-        <item>#FF387DC7</item>
-        <item>#FF385FC7</item>
-        <item>#FF3842C7</item>
-        <item>#FF4B38C7</item>
-        <item>#FF6938C7</item>
-        <item>#FF8738C7</item>
-        <item>#FFA438C7</item>
-        <item>#FFC238C7</item>
-        <item>#FFC738AE</item>
-        <item>#FFC73891</item>
-        <item>#FFC73873</item>
-        <item>#FFC73855</item>
-        <item>#FF111111</item>
-        <item>#FF444444</item>
-        <item>#FF777777</item>
-        <item>#FF7C2D12</item>
-        <item>#FF1E3A8A</item>
-        <item>#FF7C5CFF</item>
-    </array>
+    <!-- The 24 ready-made app drawer icons: style|main color|second color. -->
+    <string-array name="icon_presets">
+        <item>A|#FF377DC0|#FFFFFFFF</item>
+        <item>A|#FF7C5CFF|#FF0E0E10</item>
+        <item>A|#FFFF8A00|#FF14213D</item>
+        <item>A|#FF1E8E5A|#FFF4EFE3</item>
+        <item>A|#FFE5484D|#FF1F1F23</item>
+        <item>A|#FF0F766E|#FFFCD34D</item>
+        <item>A|#FF111111|#FFE7B53C</item>
+        <item>A|#FFDB2777|#FFFFFFFF</item>
+        <item>B|#FF377DC0|#FFFFFFFF</item>
+        <item>B|#FF7C5CFF|#FF0E0E10</item>
+        <item>B|#FFFF8A00|#FF14213D</item>
+        <item>B|#FF1E8E5A|#FFF4EFE3</item>
+        <item>B|#FFE5484D|#FF1F1F23</item>
+        <item>B|#FF0F766E|#FFFCD34D</item>
+        <item>B|#FF111111|#FFE7B53C</item>
+        <item>B|#FFDB2777|#FFFFFFFF</item>
+        <item>C|#FF377DC0|#FFFFFFFF</item>
+        <item>C|#FF7C5CFF|#FF0E0E10</item>
+        <item>C|#FFFF8A00|#FF14213D</item>
+        <item>C|#FF1E8E5A|#FFF4EFE3</item>
+        <item>C|#FFE5484D|#FF1F1F23</item>
+        <item>C|#FF0F766E|#FFFCD34D</item>
+        <item>C|#FF111111|#FFE7B53C</item>
+        <item>C|#FFDB2777|#FFFFFFFF</item>
+    </string-array>
+    <color name="icon_bg_a1">#FFFFFFFF</color>
+    <color name="icon_bg_a2">#FF0E0E10</color>
+    <color name="icon_bg_a3">#FF14213D</color>
+    <color name="icon_bg_a4">#FFF4EFE3</color>
+    <color name="icon_bg_a5">#FF1F1F23</color>
+    <color name="icon_bg_a6">#FFFCD34D</color>
+    <color name="icon_bg_a7">#FFE7B53C</color>
+    <color name="icon_bg_a8">#FFFFFFFF</color>
+    <color name="icon_bg_b1">#FF377DC0</color>
+    <color name="icon_bg_b2">#FF7C5CFF</color>
+    <color name="icon_bg_b3">#FFFF8A00</color>
+    <color name="icon_bg_b4">#FF1E8E5A</color>
+    <color name="icon_bg_b5">#FFE5484D</color>
+    <color name="icon_bg_b6">#FF0F766E</color>
+    <color name="icon_bg_b7">#FF111111</color>
+    <color name="icon_bg_b8">#FFDB2777</color>
+    <color name="icon_bg_c1">#FF377DC0</color>
+    <color name="icon_bg_c2">#FF7C5CFF</color>
+    <color name="icon_bg_c3">#FFFF8A00</color>
+    <color name="icon_bg_c4">#FF1E8E5A</color>
+    <color name="icon_bg_c5">#FFE5484D</color>
+    <color name="icon_bg_c6">#FF0F766E</color>
+    <color name="icon_bg_c7">#FF111111</color>
+    <color name="icon_bg_c8">#FFDB2777</color>
 </resources>

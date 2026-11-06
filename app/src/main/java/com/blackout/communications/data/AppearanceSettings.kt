@@ -6,6 +6,13 @@ import org.json.JSONObject
 enum class ThemeMode(val label: String) { Dark("Dark"), Black("Black"), Light("Light"), System("Follow phone") }
 enum class TextSize(val label: String, val scale: Float) { Small("Small", 0.9f), Normal("Normal", 1f), Large("Large", 1.12f), ExtraLarge("Extra large", 1.25f) }
 enum class StartTab(val label: String) { Contacts("Contacts"), Chats("Chats"), Calls("Calls"), LastUsed("Last used") }
+/** App icon styles: A = ring on the second color, B = ring on the main color, C = big book, no ring. */
+enum class IconStyle(val label: String, val description: String) {
+    A("Ring", "Second color fills the background"),
+    B("Solid", "Main color fills the background"),
+    C("Badge", "Bigger book, no ring"),
+}
+
 enum class ColorSlot(val label: String) { Accent("Accent"), Background("Background"), Text("Text"), MyBubble("Your message bubbles"), TheirBubble("Their message bubbles") }
 
 /** Custom colors as ARGB ints. Missing = use the theme's own color. */
@@ -27,6 +34,8 @@ data class Appearance(
     val startTab: StartTab = StartTab.Contacts,
     val lastTab: String = "Contacts",
     val iconColor: Int = 0xFF377DC0.toInt(),
+    val iconColor2: Int = 0xFFFFFFFF.toInt(),
+    val iconStyle: IconStyle = IconStyle.A,
 ) {
     fun paletteFor(tab: String): Palette = if (sameForAllTabs) palette else tabPalettes[tab] ?: palette
     fun pictureFor(tab: String): String? = if (picturePerTab) pictures[tab] else pictures["all"]
@@ -57,6 +66,8 @@ class AppearanceSettings(context: Context) {
         put("startTab", a.startTab.name)
         put("lastTab", a.lastTab)
         put("iconColor", a.iconColor)
+        put("iconColor2", a.iconColor2)
+        put("iconStyle", a.iconStyle.name)
     }
 
     private fun decode(o: JSONObject): Appearance {
@@ -75,6 +86,8 @@ class AppearanceSettings(context: Context) {
             startTab = runCatching { StartTab.valueOf(o.getString("startTab")) }.getOrDefault(d.startTab),
             lastTab = o.optString("lastTab", "Contacts"),
             iconColor = o.optInt("iconColor", d.iconColor),
+            iconColor2 = o.optInt("iconColor2", d.iconColor2),
+            iconStyle = runCatching { IconStyle.valueOf(o.getString("iconStyle")) }.getOrDefault(d.iconStyle),
         )
     }
 }

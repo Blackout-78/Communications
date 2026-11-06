@@ -1,5 +1,8 @@
 package com.blackout.communications.ui.contacts
 
+import android.content.Intent
+import android.net.Uri
+import android.provider.OpenableColumns
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
@@ -20,12 +23,14 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.outlined.DeleteOutline
+import androidx.compose.material.icons.outlined.MusicNote
 import androidx.compose.material.icons.outlined.PhotoCamera
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CheckboxDefaults
@@ -50,6 +55,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
@@ -84,6 +91,10 @@ fun EditContactScreen(
     var group by remember { mutableStateOf("") }
     var favorite by remember { mutableStateOf(false) }
     var photoPath by remember { mutableStateOf<String?>(null) }
+    // Ringtone: a newly picked sound file, or a request to go back to the default ringtone.
+    var newRingtone by remember { mutableStateOf<Uri?>(null) }
+    var newRingtoneName by remember { mutableStateOf<String?>(null) }
+    var useDefaultRingtone by remember { mutableStateOf(false) }
     val numbers = remember { mutableStateListOf(NumberField("Mobile", prefillNumber.orEmpty(), true)) }
     var error by remember { mutableStateOf<String?>(null) }
 
@@ -121,6 +132,21 @@ fun EditContactScreen(
         }
     }
 
+    val context = LocalContext.current
+    // Opens the phone's file browser on audio files, in any folder or storage (Downloads, Music, SD card, ...).
+    val pickRingtone = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+        if (uri != null) {
+            runCatching { context.contentResolver.takePersistableUriPermission(uri, Intent.FLAG_GRANT_READ_URI_PERMISSION) }
+            newRingtone = uri
+            newRingtoneName = runCatching {
+                context.contentResolver.query(uri, arrayOf(OpenableColumns.DISPLAY_NAME), null, null, null)?.use { c ->
+                    if (c.moveToFirst()) c.getString(0) else null
+                }
+            }.getOrNull() ?: "Chosen sound"
+            useDefaultRingtone = false
+        }
+    }
+
     fun save() {
         val cleaned = numbers.filter { it.number.isNotBlank() }
         if (firstName.isBlank() && lastName.isBlank() && cleaned.isEmpty()) {
@@ -136,7 +162,13 @@ fun EditContactScreen(
             photoPath = photoPath,
         )
         val list = cleaned.map { PhoneNumber(label = it.label, number = it.number.trim(), isMain = it.isMain) }
-        vm.save(contact, list, previousPhoto = original?.photoPath) { id -> onDone(id) }
+        vm.save(contact, list, previousPhoto = original?.photoPath) { id ->
+            when {
+                newRingtone != null -> vm.setRingtone(id, newRingtone)
+                useDefaultRingtone -> vm.setRingtone(id, null)
+            }
+            onDone(id)
+        }
     }
 
     if (!loaded) return
@@ -193,6 +225,35 @@ fun EditContactScreen(
             }
 
             Field("Group (for example Family or Work)", group, { group = it }, KeyboardType.Text, KeyboardCapitalization.Words)
+
+            // Ringtone, picked from any sound file on the phone.
+            Text("RINGTONE", color = AppColors.SubText, fontSize = 12.sp, fontWeight = FontWeight.SemiBold, modifier = Modifier.padding(top = 6.dp))
+            val currentName = when {
+                newRingtoneName != null -> newRingtoneName
+                useDefaultRingtone -> null
+                else -> original?.ringtoneName
+            }
+            Row(
+                Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).background(AppColors.Card)
+                    .clickable { pickRingtone.launch(arrayOf("audio/*", "application/ogg")) }
+                    .padding(horizontal = 14.dp, vertical = 12.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Icon(Icons.Outlined.MusicNote, null, tint = AppColors.Accent)
+                Column(Modifier.weight(1f).padding(start = 12.dp)) {
+                    Text(currentName ?: "Default ringtone", fontSize = 15.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    Text("Tap to choose any sound file on your phone", fontSize = 12.sp, color = AppColors.SubText)
+                }
+            }
+            if (currentName != null) {
+                TextButton(onClick = { newRingtone = null; newRingtoneName = null; useDefaultRingtone = true }) {
+                    Text("Use default ringtone", color = AppColors.SubText)
+                }
+            }
+            Text(
+                "The app keeps its own copy, so the ringtone still works if the original file is moved or deleted.",
+                color = AppColors.SubText, fontSize = 12.sp,
+            )
 
             Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.clickable { favorite = !favorite }) {
                 Checkbox(checked = favorite, onCheckedChange = { favorite = it }, colors = CheckboxDefaults.colors(checkedColor = AppColors.Accent))

@@ -224,6 +224,7 @@ fun AppRoot(request: LaunchRequest?, onRequestHandled: () -> Unit) {
                                 onOpenProfile = { stack.add(Screen.Profile(it)) },
                                 onAddContact = { stack.add(Screen.Edit(null)) },
                                 onOpenDialpad = { stack.add(Screen.Dialpad()) },
+                                onOpenBackup = { tab = Tab.Settings; backupFocus = true },
                             )
                             Tab.Chats -> ChatsScreen(
                                 vm = chatsVm,

@@ -1,54 +1,720 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- The 24 ready-made app drawer icons: style|main color|second color. -->
+    <!-- Ready-made app drawer icons: style|main|second|alias. Settings picks the closest to your colors. -->
     <string-array name="icon_presets">
-        <item>A|#FF377DC0|#FFFFFFFF</item>
-        <item>A|#FF7C5CFF|#FF0E0E10</item>
-        <item>A|#FFFF8A00|#FF14213D</item>
-        <item>A|#FF1E8E5A|#FFF4EFE3</item>
-        <item>A|#FFE5484D|#FF1F1F23</item>
-        <item>A|#FF0F766E|#FFFCD34D</item>
-        <item>A|#FF111111|#FFE7B53C</item>
-        <item>A|#FFDB2777|#FFFFFFFF</item>
-        <item>B|#FF377DC0|#FFFFFFFF</item>
-        <item>B|#FF7C5CFF|#FF0E0E10</item>
-        <item>B|#FFFF8A00|#FF14213D</item>
-        <item>B|#FF1E8E5A|#FFF4EFE3</item>
-        <item>B|#FFE5484D|#FF1F1F23</item>
-        <item>B|#FF0F766E|#FFFCD34D</item>
-        <item>B|#FF111111|#FFE7B53C</item>
-        <item>B|#FFDB2777|#FFFFFFFF</item>
-        <item>C|#FF377DC0|#FFFFFFFF</item>
-        <item>C|#FF7C5CFF|#FF0E0E10</item>
-        <item>C|#FFFF8A00|#FF14213D</item>
-        <item>C|#FF1E8E5A|#FFF4EFE3</item>
-        <item>C|#FFE5484D|#FF1F1F23</item>
-        <item>C|#FF0F766E|#FFFCD34D</item>
-        <item>C|#FF111111|#FFE7B53C</item>
-        <item>C|#FFDB2777|#FFFFFFFF</item>
+        <item>A|#FFCC3939|#FFFFFFFF|.IconA000</item>
+        <item>A|#FFCC3939|#FF121214|.IconA001</item>
+        <item>A|#FFCC3939|#FFF4EFE3|.IconA002</item>
+        <item>A|#FFCC3939|#FFE7B53C|.IconA003</item>
+        <item>A|#FFCC5E39|#FFFFFFFF|.IconA010</item>
+        <item>A|#FFCC5E39|#FF121214|.IconA011</item>
+        <item>A|#FFCC5E39|#FFF4EFE3|.IconA012</item>
+        <item>A|#FFCC5E39|#FFE7B53C|.IconA013</item>
+        <item>A|#FFCC8339|#FFFFFFFF|.IconA020</item>
+        <item>A|#FFCC8339|#FF121214|.IconA021</item>
+        <item>A|#FFCC8339|#FFF4EFE3|.IconA022</item>
+        <item>A|#FFCC8339|#FFE7B53C|.IconA023</item>
+        <item>A|#FFCCA739|#FFFFFFFF|.IconA030</item>
+        <item>A|#FFCCA739|#FF121214|.IconA031</item>
+        <item>A|#FFCCA739|#FFF4EFE3|.IconA032</item>
+        <item>A|#FFCCA739|#FFE7B53C|.IconA033</item>
+        <item>A|#FFCCCC39|#FFFFFFFF|.IconA040</item>
+        <item>A|#FFCCCC39|#FF121214|.IconA041</item>
+        <item>A|#FFCCCC39|#FFF4EFE3|.IconA042</item>
+        <item>A|#FFCCCC39|#FFE7B53C|.IconA043</item>
+        <item>A|#FFA7CC39|#FFFFFFFF|.IconA050</item>
+        <item>A|#FFA7CC39|#FF121214|.IconA051</item>
+        <item>A|#FFA7CC39|#FFF4EFE3|.IconA052</item>
+        <item>A|#FFA7CC39|#FFE7B53C|.IconA053</item>
+        <item>A|#FF83CC39|#FFFFFFFF|.IconA060</item>
+        <item>A|#FF83CC39|#FF121214|.IconA061</item>
+        <item>A|#FF83CC39|#FFF4EFE3|.IconA062</item>
+        <item>A|#FF83CC39|#FFE7B53C|.IconA063</item>
+        <item>A|#FF5ECC39|#FFFFFFFF|.IconA070</item>
+        <item>A|#FF5ECC39|#FF121214|.IconA071</item>
+        <item>A|#FF5ECC39|#FFF4EFE3|.IconA072</item>
+        <item>A|#FF5ECC39|#FFE7B53C|.IconA073</item>
+        <item>A|#FF39CC39|#FFFFFFFF|.IconA080</item>
+        <item>A|#FF39CC39|#FF121214|.IconA081</item>
+        <item>A|#FF39CC39|#FFF4EFE3|.IconA082</item>
+        <item>A|#FF39CC39|#FFE7B53C|.IconA083</item>
+        <item>A|#FF39CC5E|#FFFFFFFF|.IconA090</item>
+        <item>A|#FF39CC5E|#FF121214|.IconA091</item>
+        <item>A|#FF39CC5E|#FFF4EFE3|.IconA092</item>
+        <item>A|#FF39CC5E|#FFE7B53C|.IconA093</item>
+        <item>A|#FF39CC83|#FFFFFFFF|.IconA100</item>
+        <item>A|#FF39CC83|#FF121214|.IconA101</item>
+        <item>A|#FF39CC83|#FFF4EFE3|.IconA102</item>
+        <item>A|#FF39CC83|#FFE7B53C|.IconA103</item>
+        <item>A|#FF39CCA7|#FFFFFFFF|.IconA110</item>
+        <item>A|#FF39CCA7|#FF121214|.IconA111</item>
+        <item>A|#FF39CCA7|#FFF4EFE3|.IconA112</item>
+        <item>A|#FF39CCA7|#FFE7B53C|.IconA113</item>
+        <item>A|#FF39CCCC|#FFFFFFFF|.IconA120</item>
+        <item>A|#FF39CCCC|#FF121214|.IconA121</item>
+        <item>A|#FF39CCCC|#FFF4EFE3|.IconA122</item>
+        <item>A|#FF39CCCC|#FFE7B53C|.IconA123</item>
+        <item>A|#FF39A7CC|#FFFFFFFF|.IconA130</item>
+        <item>A|#FF39A7CC|#FF121214|.IconA131</item>
+        <item>A|#FF39A7CC|#FFF4EFE3|.IconA132</item>
+        <item>A|#FF39A7CC|#FFE7B53C|.IconA133</item>
+        <item>A|#FF3983CC|#FFFFFFFF|.IconA140</item>
+        <item>A|#FF3983CC|#FF121214|.IconA141</item>
+        <item>A|#FF3983CC|#FFF4EFE3|.IconA142</item>
+        <item>A|#FF3983CC|#FFE7B53C|.IconA143</item>
+        <item>A|#FF395ECC|#FFFFFFFF|.IconA150</item>
+        <item>A|#FF395ECC|#FF121214|.IconA151</item>
+        <item>A|#FF395ECC|#FFF4EFE3|.IconA152</item>
+        <item>A|#FF395ECC|#FFE7B53C|.IconA153</item>
+        <item>A|#FF3939CC|#FFFFFFFF|.IconA160</item>
+        <item>A|#FF3939CC|#FF121214|.IconA161</item>
+        <item>A|#FF3939CC|#FFF4EFE3|.IconA162</item>
+        <item>A|#FF3939CC|#FFE7B53C|.IconA163</item>
+        <item>A|#FF5E39CC|#FFFFFFFF|.IconA170</item>
+        <item>A|#FF5E39CC|#FF121214|.IconA171</item>
+        <item>A|#FF5E39CC|#FFF4EFE3|.IconA172</item>
+        <item>A|#FF5E39CC|#FFE7B53C|.IconA173</item>
+        <item>A|#FF8339CC|#FFFFFFFF|.IconA180</item>
+        <item>A|#FF8339CC|#FF121214|.IconA181</item>
+        <item>A|#FF8339CC|#FFF4EFE3|.IconA182</item>
+        <item>A|#FF8339CC|#FFE7B53C|.IconA183</item>
+        <item>A|#FFA739CC|#FFFFFFFF|.IconA190</item>
+        <item>A|#FFA739CC|#FF121214|.IconA191</item>
+        <item>A|#FFA739CC|#FFF4EFE3|.IconA192</item>
+        <item>A|#FFA739CC|#FFE7B53C|.IconA193</item>
+        <item>A|#FFCC39CC|#FFFFFFFF|.IconA200</item>
+        <item>A|#FFCC39CC|#FF121214|.IconA201</item>
+        <item>A|#FFCC39CC|#FFF4EFE3|.IconA202</item>
+        <item>A|#FFCC39CC|#FFE7B53C|.IconA203</item>
+        <item>A|#FFCC39A7|#FFFFFFFF|.IconA210</item>
+        <item>A|#FFCC39A7|#FF121214|.IconA211</item>
+        <item>A|#FFCC39A7|#FFF4EFE3|.IconA212</item>
+        <item>A|#FFCC39A7|#FFE7B53C|.IconA213</item>
+        <item>A|#FFCC3983|#FFFFFFFF|.IconA220</item>
+        <item>A|#FFCC3983|#FF121214|.IconA221</item>
+        <item>A|#FFCC3983|#FFF4EFE3|.IconA222</item>
+        <item>A|#FFCC3983|#FFE7B53C|.IconA223</item>
+        <item>A|#FFCC395E|#FFFFFFFF|.IconA230</item>
+        <item>A|#FFCC395E|#FF121214|.IconA231</item>
+        <item>A|#FFCC395E|#FFF4EFE3|.IconA232</item>
+        <item>A|#FFCC395E|#FFE7B53C|.IconA233</item>
+        <item>A|#FF377DC0|#FFFFFFFF|.IconA240</item>
+        <item>A|#FF377DC0|#FF121214|.IconA241</item>
+        <item>A|#FF377DC0|#FFF4EFE3|.IconA242</item>
+        <item>A|#FF377DC0|#FFE7B53C|.IconA243</item>
+        <item>A|#FF111111|#FFFFFFFF|.IconA250</item>
+        <item>A|#FF111111|#FF121214|.IconA251</item>
+        <item>A|#FF111111|#FFF4EFE3|.IconA252</item>
+        <item>A|#FF111111|#FFE7B53C|.IconA253</item>
+        <item>A|#FF5A5A60|#FFFFFFFF|.IconA260</item>
+        <item>A|#FF5A5A60|#FF121214|.IconA261</item>
+        <item>A|#FF5A5A60|#FFF4EFE3|.IconA262</item>
+        <item>A|#FF5A5A60|#FFE7B53C|.IconA263</item>
+        <item>A|#FF9CA3AF|#FFFFFFFF|.IconA270</item>
+        <item>A|#FF9CA3AF|#FF121214|.IconA271</item>
+        <item>A|#FF9CA3AF|#FFF4EFE3|.IconA272</item>
+        <item>A|#FF9CA3AF|#FFE7B53C|.IconA273</item>
+        <item>A|#FF7C2D12|#FFFFFFFF|.IconA280</item>
+        <item>A|#FF7C2D12|#FF121214|.IconA281</item>
+        <item>A|#FF7C2D12|#FFF4EFE3|.IconA282</item>
+        <item>A|#FF7C2D12|#FFE7B53C|.IconA283</item>
+        <item>A|#FFE7B53C|#FFFFFFFF|.IconA290</item>
+        <item>A|#FFE7B53C|#FF121214|.IconA291</item>
+        <item>A|#FFE7B53C|#FFF4EFE3|.IconA292</item>
+        <item>B|#FFCC3939|#FFFFFFFF|.IconB000</item>
+        <item>B|#FFCC3939|#FF121214|.IconB001</item>
+        <item>B|#FFCC3939|#FFF4EFE3|.IconB002</item>
+        <item>B|#FFCC3939|#FFE7B53C|.IconB003</item>
+        <item>B|#FFCC5E39|#FFFFFFFF|.IconB010</item>
+        <item>B|#FFCC5E39|#FF121214|.IconB011</item>
+        <item>B|#FFCC5E39|#FFF4EFE3|.IconB012</item>
+        <item>B|#FFCC5E39|#FFE7B53C|.IconB013</item>
+        <item>B|#FFCC8339|#FFFFFFFF|.IconB020</item>
+        <item>B|#FFCC8339|#FF121214|.IconB021</item>
+        <item>B|#FFCC8339|#FFF4EFE3|.IconB022</item>
+        <item>B|#FFCC8339|#FFE7B53C|.IconB023</item>
+        <item>B|#FFCCA739|#FFFFFFFF|.IconB030</item>
+        <item>B|#FFCCA739|#FF121214|.IconB031</item>
+        <item>B|#FFCCA739|#FFF4EFE3|.IconB032</item>
+        <item>B|#FFCCA739|#FFE7B53C|.IconB033</item>
+        <item>B|#FFCCCC39|#FFFFFFFF|.IconB040</item>
+        <item>B|#FFCCCC39|#FF121214|.IconB041</item>
+        <item>B|#FFCCCC39|#FFF4EFE3|.IconB042</item>
+        <item>B|#FFCCCC39|#FFE7B53C|.IconB043</item>
+        <item>B|#FFA7CC39|#FFFFFFFF|.IconB050</item>
+        <item>B|#FFA7CC39|#FF121214|.IconB051</item>
+        <item>B|#FFA7CC39|#FFF4EFE3|.IconB052</item>
+        <item>B|#FFA7CC39|#FFE7B53C|.IconB053</item>
+        <item>B|#FF83CC39|#FFFFFFFF|.IconB060</item>
+        <item>B|#FF83CC39|#FF121214|.IconB061</item>
+        <item>B|#FF83CC39|#FFF4EFE3|.IconB062</item>
+        <item>B|#FF83CC39|#FFE7B53C|.IconB063</item>
+        <item>B|#FF5ECC39|#FFFFFFFF|.IconB070</item>
+        <item>B|#FF5ECC39|#FF121214|.IconB071</item>
+        <item>B|#FF5ECC39|#FFF4EFE3|.IconB072</item>
+        <item>B|#FF5ECC39|#FFE7B53C|.IconB073</item>
+        <item>B|#FF39CC39|#FFFFFFFF|.IconB080</item>
+        <item>B|#FF39CC39|#FF121214|.IconB081</item>
+        <item>B|#FF39CC39|#FFF4EFE3|.IconB082</item>
+        <item>B|#FF39CC39|#FFE7B53C|.IconB083</item>
+        <item>B|#FF39CC5E|#FFFFFFFF|.IconB090</item>
+        <item>B|#FF39CC5E|#FF121214|.IconB091</item>
+        <item>B|#FF39CC5E|#FFF4EFE3|.IconB092</item>
+        <item>B|#FF39CC5E|#FFE7B53C|.IconB093</item>
+        <item>B|#FF39CC83|#FFFFFFFF|.IconB100</item>
+        <item>B|#FF39CC83|#FF121214|.IconB101</item>
+        <item>B|#FF39CC83|#FFF4EFE3|.IconB102</item>
+        <item>B|#FF39CC83|#FFE7B53C|.IconB103</item>
+        <item>B|#FF39CCA7|#FFFFFFFF|.IconB110</item>
+        <item>B|#FF39CCA7|#FF121214|.IconB111</item>
+        <item>B|#FF39CCA7|#FFF4EFE3|.IconB112</item>
+        <item>B|#FF39CCA7|#FFE7B53C|.IconB113</item>
+        <item>B|#FF39CCCC|#FFFFFFFF|.IconB120</item>
+        <item>B|#FF39CCCC|#FF121214|.IconB121</item>
+        <item>B|#FF39CCCC|#FFF4EFE3|.IconB122</item>
+        <item>B|#FF39CCCC|#FFE7B53C|.IconB123</item>
+        <item>B|#FF39A7CC|#FFFFFFFF|.IconB130</item>
+        <item>B|#FF39A7CC|#FF121214|.IconB131</item>
+        <item>B|#FF39A7CC|#FFF4EFE3|.IconB132</item>
+        <item>B|#FF39A7CC|#FFE7B53C|.IconB133</item>
+        <item>B|#FF3983CC|#FFFFFFFF|.IconB140</item>
+        <item>B|#FF3983CC|#FF121214|.IconB141</item>
+        <item>B|#FF3983CC|#FFF4EFE3|.IconB142</item>
+        <item>B|#FF3983CC|#FFE7B53C|.IconB143</item>
+        <item>B|#FF395ECC|#FFFFFFFF|.IconB150</item>
+        <item>B|#FF395ECC|#FF121214|.IconB151</item>
+        <item>B|#FF395ECC|#FFF4EFE3|.IconB152</item>
+        <item>B|#FF395ECC|#FFE7B53C|.IconB153</item>
+        <item>B|#FF3939CC|#FFFFFFFF|.IconB160</item>
+        <item>B|#FF3939CC|#FF121214|.IconB161</item>
+        <item>B|#FF3939CC|#FFF4EFE3|.IconB162</item>
+        <item>B|#FF3939CC|#FFE7B53C|.IconB163</item>
+        <item>B|#FF5E39CC|#FFFFFFFF|.IconB170</item>
+        <item>B|#FF5E39CC|#FF121214|.IconB171</item>
+        <item>B|#FF5E39CC|#FFF4EFE3|.IconB172</item>
+        <item>B|#FF5E39CC|#FFE7B53C|.IconB173</item>
+        <item>B|#FF8339CC|#FFFFFFFF|.IconB180</item>
+        <item>B|#FF8339CC|#FF121214|.IconB181</item>
+        <item>B|#FF8339CC|#FFF4EFE3|.IconB182</item>
+        <item>B|#FF8339CC|#FFE7B53C|.IconB183</item>
+        <item>B|#FFA739CC|#FFFFFFFF|.IconB190</item>
+        <item>B|#FFA739CC|#FF121214|.IconB191</item>
+        <item>B|#FFA739CC|#FFF4EFE3|.IconB192</item>
+        <item>B|#FFA739CC|#FFE7B53C|.IconB193</item>
+        <item>B|#FFCC39CC|#FFFFFFFF|.IconB200</item>
+        <item>B|#FFCC39CC|#FF121214|.IconB201</item>
+        <item>B|#FFCC39CC|#FFF4EFE3|.IconB202</item>
+        <item>B|#FFCC39CC|#FFE7B53C|.IconB203</item>
+        <item>B|#FFCC39A7|#FFFFFFFF|.IconB210</item>
+        <item>B|#FFCC39A7|#FF121214|.IconB211</item>
+        <item>B|#FFCC39A7|#FFF4EFE3|.IconB212</item>
+        <item>B|#FFCC39A7|#FFE7B53C|.IconB213</item>
+        <item>B|#FFCC3983|#FFFFFFFF|.IconB220</item>
+        <item>B|#FFCC3983|#FF121214|.IconB221</item>
+        <item>B|#FFCC3983|#FFF4EFE3|.IconB222</item>
+        <item>B|#FFCC3983|#FFE7B53C|.IconB223</item>
+        <item>B|#FFCC395E|#FFFFFFFF|.IconB230</item>
+        <item>B|#FFCC395E|#FF121214|.IconB231</item>
+        <item>B|#FFCC395E|#FFF4EFE3|.IconB232</item>
+        <item>B|#FFCC395E|#FFE7B53C|.IconB233</item>
+        <item>B|#FF377DC0|#FFFFFFFF|.IconB240</item>
+        <item>B|#FF377DC0|#FF121214|.IconB241</item>
+        <item>B|#FF377DC0|#FFF4EFE3|.IconB242</item>
+        <item>B|#FF377DC0|#FFE7B53C|.IconB243</item>
+        <item>B|#FF111111|#FFFFFFFF|.IconB250</item>
+        <item>B|#FF111111|#FF121214|.IconB251</item>
+        <item>B|#FF111111|#FFF4EFE3|.IconB252</item>
+        <item>B|#FF111111|#FFE7B53C|.IconB253</item>
+        <item>B|#FF5A5A60|#FFFFFFFF|.IconB260</item>
+        <item>B|#FF5A5A60|#FF121214|.IconB261</item>
+        <item>B|#FF5A5A60|#FFF4EFE3|.IconB262</item>
+        <item>B|#FF5A5A60|#FFE7B53C|.IconB263</item>
+        <item>B|#FF9CA3AF|#FFFFFFFF|.IconB270</item>
+        <item>B|#FF9CA3AF|#FF121214|.IconB271</item>
+        <item>B|#FF9CA3AF|#FFF4EFE3|.IconB272</item>
+        <item>B|#FF9CA3AF|#FFE7B53C|.IconB273</item>
+        <item>B|#FF7C2D12|#FFFFFFFF|.IconB280</item>
+        <item>B|#FF7C2D12|#FF121214|.IconB281</item>
+        <item>B|#FF7C2D12|#FFF4EFE3|.IconB282</item>
+        <item>B|#FF7C2D12|#FFE7B53C|.IconB283</item>
+        <item>B|#FFE7B53C|#FFFFFFFF|.IconB290</item>
+        <item>B|#FFE7B53C|#FF121214|.IconB291</item>
+        <item>B|#FFE7B53C|#FFF4EFE3|.IconB292</item>
+        <item>C|#FFCC3939|#FFFFFFFF|.IconC000</item>
+        <item>C|#FFCC3939|#FF121214|.IconC001</item>
+        <item>C|#FFCC3939|#FFF4EFE3|.IconC002</item>
+        <item>C|#FFCC3939|#FFE7B53C|.IconC003</item>
+        <item>C|#FFCC5E39|#FFFFFFFF|.IconC010</item>
+        <item>C|#FFCC5E39|#FF121214|.IconC011</item>
+        <item>C|#FFCC5E39|#FFF4EFE3|.IconC012</item>
+        <item>C|#FFCC5E39|#FFE7B53C|.IconC013</item>
+        <item>C|#FFCC8339|#FFFFFFFF|.IconC020</item>
+        <item>C|#FFCC8339|#FF121214|.IconC021</item>
+        <item>C|#FFCC8339|#FFF4EFE3|.IconC022</item>
+        <item>C|#FFCC8339|#FFE7B53C|.IconC023</item>
+        <item>C|#FFCCA739|#FFFFFFFF|.IconC030</item>
+        <item>C|#FFCCA739|#FF121214|.IconC031</item>
+        <item>C|#FFCCA739|#FFF4EFE3|.IconC032</item>
+        <item>C|#FFCCA739|#FFE7B53C|.IconC033</item>
+        <item>C|#FFCCCC39|#FFFFFFFF|.IconC040</item>
+        <item>C|#FFCCCC39|#FF121214|.IconC041</item>
+        <item>C|#FFCCCC39|#FFF4EFE3|.IconC042</item>
+        <item>C|#FFCCCC39|#FFE7B53C|.IconC043</item>
+        <item>C|#FFA7CC39|#FFFFFFFF|.IconC050</item>
+        <item>C|#FFA7CC39|#FF121214|.IconC051</item>
+        <item>C|#FFA7CC39|#FFF4EFE3|.IconC052</item>
+        <item>C|#FFA7CC39|#FFE7B53C|.IconC053</item>
+        <item>C|#FF83CC39|#FFFFFFFF|.IconC060</item>
+        <item>C|#FF83CC39|#FF121214|.IconC061</item>
+        <item>C|#FF83CC39|#FFF4EFE3|.IconC062</item>
+        <item>C|#FF83CC39|#FFE7B53C|.IconC063</item>
+        <item>C|#FF5ECC39|#FFFFFFFF|.IconC070</item>
+        <item>C|#FF5ECC39|#FF121214|.IconC071</item>
+        <item>C|#FF5ECC39|#FFF4EFE3|.IconC072</item>
+        <item>C|#FF5ECC39|#FFE7B53C|.IconC073</item>
+        <item>C|#FF39CC39|#FFFFFFFF|.IconC080</item>
+        <item>C|#FF39CC39|#FF121214|.IconC081</item>
+        <item>C|#FF39CC39|#FFF4EFE3|.IconC082</item>
+        <item>C|#FF39CC39|#FFE7B53C|.IconC083</item>
+        <item>C|#FF39CC5E|#FFFFFFFF|.IconC090</item>
+        <item>C|#FF39CC5E|#FF121214|.IconC091</item>
+        <item>C|#FF39CC5E|#FFF4EFE3|.IconC092</item>
+        <item>C|#FF39CC5E|#FFE7B53C|.IconC093</item>
+        <item>C|#FF39CC83|#FFFFFFFF|.IconC100</item>
+        <item>C|#FF39CC83|#FF121214|.IconC101</item>
+        <item>C|#FF39CC83|#FFF4EFE3|.IconC102</item>
+        <item>C|#FF39CC83|#FFE7B53C|.IconC103</item>
+        <item>C|#FF39CCA7|#FFFFFFFF|.IconC110</item>
+        <item>C|#FF39CCA7|#FF121214|.IconC111</item>
+        <item>C|#FF39CCA7|#FFF4EFE3|.IconC112</item>
+        <item>C|#FF39CCA7|#FFE7B53C|.IconC113</item>
+        <item>C|#FF39CCCC|#FFFFFFFF|.IconC120</item>
+        <item>C|#FF39CCCC|#FF121214|.IconC121</item>
+        <item>C|#FF39CCCC|#FFF4EFE3|.IconC122</item>
+        <item>C|#FF39CCCC|#FFE7B53C|.IconC123</item>
+        <item>C|#FF39A7CC|#FFFFFFFF|.IconC130</item>
+        <item>C|#FF39A7CC|#FF121214|.IconC131</item>
+        <item>C|#FF39A7CC|#FFF4EFE3|.IconC132</item>
+        <item>C|#FF39A7CC|#FFE7B53C|.IconC133</item>
+        <item>C|#FF3983CC|#FFFFFFFF|.IconC140</item>
+        <item>C|#FF3983CC|#FF121214|.IconC141</item>
+        <item>C|#FF3983CC|#FFF4EFE3|.IconC142</item>
+        <item>C|#FF3983CC|#FFE7B53C|.IconC143</item>
+        <item>C|#FF395ECC|#FFFFFFFF|.IconC150</item>
+        <item>C|#FF395ECC|#FF121214|.IconC151</item>
+        <item>C|#FF395ECC|#FFF4EFE3|.IconC152</item>
+        <item>C|#FF395ECC|#FFE7B53C|.IconC153</item>
+        <item>C|#FF3939CC|#FFFFFFFF|.IconC160</item>
+        <item>C|#FF3939CC|#FF121214|.IconC161</item>
+        <item>C|#FF3939CC|#FFF4EFE3|.IconC162</item>
+        <item>C|#FF3939CC|#FFE7B53C|.IconC163</item>
+        <item>C|#FF5E39CC|#FFFFFFFF|.IconC170</item>
+        <item>C|#FF5E39CC|#FF121214|.IconC171</item>
+        <item>C|#FF5E39CC|#FFF4EFE3|.IconC172</item>
+        <item>C|#FF5E39CC|#FFE7B53C|.IconC173</item>
+        <item>C|#FF8339CC|#FFFFFFFF|.IconC180</item>
+        <item>C|#FF8339CC|#FF121214|.IconC181</item>
+        <item>C|#FF8339CC|#FFF4EFE3|.IconC182</item>
+        <item>C|#FF8339CC|#FFE7B53C|.IconC183</item>
+        <item>C|#FFA739CC|#FFFFFFFF|.IconC190</item>
+        <item>C|#FFA739CC|#FF121214|.IconC191</item>
+        <item>C|#FFA739CC|#FFF4EFE3|.IconC192</item>
+        <item>C|#FFA739CC|#FFE7B53C|.IconC193</item>
+        <item>C|#FFCC39CC|#FFFFFFFF|.IconC200</item>
+        <item>C|#FFCC39CC|#FF121214|.IconC201</item>
+        <item>C|#FFCC39CC|#FFF4EFE3|.IconC202</item>
+        <item>C|#FFCC39CC|#FFE7B53C|.IconC203</item>
+        <item>C|#FFCC39A7|#FFFFFFFF|.IconC210</item>
+        <item>C|#FFCC39A7|#FF121214|.IconC211</item>
+        <item>C|#FFCC39A7|#FFF4EFE3|.IconC212</item>
+        <item>C|#FFCC39A7|#FFE7B53C|.IconC213</item>
+        <item>C|#FFCC3983|#FFFFFFFF|.IconC220</item>
+        <item>C|#FFCC3983|#FF121214|.IconC221</item>
+        <item>C|#FFCC3983|#FFF4EFE3|.IconC222</item>
+        <item>C|#FFCC3983|#FFE7B53C|.IconC223</item>
+        <item>C|#FFCC395E|#FFFFFFFF|.IconC230</item>
+        <item>C|#FFCC395E|#FF121214|.IconC231</item>
+        <item>C|#FFCC395E|#FFF4EFE3|.IconC232</item>
+        <item>C|#FFCC395E|#FFE7B53C|.IconC233</item>
+        <item>C|#FF377DC0|#FFFFFFFF|.IconC240</item>
+        <item>C|#FF377DC0|#FF121214|.IconC241</item>
+        <item>C|#FF377DC0|#FFF4EFE3|.IconC242</item>
+        <item>C|#FF377DC0|#FFE7B53C|.IconC243</item>
+        <item>C|#FF111111|#FFFFFFFF|.IconC250</item>
+        <item>C|#FF111111|#FF121214|.IconC251</item>
+        <item>C|#FF111111|#FFF4EFE3|.IconC252</item>
+        <item>C|#FF111111|#FFE7B53C|.IconC253</item>
+        <item>C|#FF5A5A60|#FFFFFFFF|.IconC260</item>
+        <item>C|#FF5A5A60|#FF121214|.IconC261</item>
+        <item>C|#FF5A5A60|#FFF4EFE3|.IconC262</item>
+        <item>C|#FF5A5A60|#FFE7B53C|.IconC263</item>
+        <item>C|#FF9CA3AF|#FFFFFFFF|.IconC270</item>
+        <item>C|#FF9CA3AF|#FF121214|.IconC271</item>
+        <item>C|#FF9CA3AF|#FFF4EFE3|.IconC272</item>
+        <item>C|#FF9CA3AF|#FFE7B53C|.IconC273</item>
+        <item>C|#FF7C2D12|#FFFFFFFF|.IconC280</item>
+        <item>C|#FF7C2D12|#FF121214|.IconC281</item>
+        <item>C|#FF7C2D12|#FFF4EFE3|.IconC282</item>
+        <item>C|#FF7C2D12|#FFE7B53C|.IconC283</item>
+        <item>C|#FFE7B53C|#FFFFFFFF|.IconC290</item>
+        <item>C|#FFE7B53C|#FF121214|.IconC291</item>
+        <item>C|#FFE7B53C|#FFF4EFE3|.IconC292</item>
     </string-array>
-    <color name="icon_bg_a1">#FFFFFFFF</color>
-    <color name="icon_bg_a2">#FF0E0E10</color>
-    <color name="icon_bg_a3">#FF14213D</color>
-    <color name="icon_bg_a4">#FFF4EFE3</color>
-    <color name="icon_bg_a5">#FF1F1F23</color>
-    <color name="icon_bg_a6">#FFFCD34D</color>
-    <color name="icon_bg_a7">#FFE7B53C</color>
-    <color name="icon_bg_a8">#FFFFFFFF</color>
-    <color name="icon_bg_b1">#FF377DC0</color>
-    <color name="icon_bg_b2">#FF7C5CFF</color>
-    <color name="icon_bg_b3">#FFFF8A00</color>
-    <color name="icon_bg_b4">#FF1E8E5A</color>
-    <color name="icon_bg_b5">#FFE5484D</color>
-    <color name="icon_bg_b6">#FF0F766E</color>
-    <color name="icon_bg_b7">#FF111111</color>
-    <color name="icon_bg_b8">#FFDB2777</color>
-    <color name="icon_bg_c1">#FF377DC0</color>
-    <color name="icon_bg_c2">#FF7C5CFF</color>
-    <color name="icon_bg_c3">#FFFF8A00</color>
-    <color name="icon_bg_c4">#FF1E8E5A</color>
-    <color name="icon_bg_c5">#FFE5484D</color>
-    <color name="icon_bg_c6">#FF0F766E</color>
-    <color name="icon_bg_c7">#FF111111</color>
-    <color name="icon_bg_c8">#FFDB2777</color>
+    <color name="icon_bg_a000">#FFFFFFFF</color>
+    <color name="icon_bg_a001">#FF121214</color>
+    <color name="icon_bg_a002">#FFF4EFE3</color>
+    <color name="icon_bg_a003">#FFE7B53C</color>
+    <color name="icon_bg_a010">#FFFFFFFF</color>
+    <color name="icon_bg_a011">#FF121214</color>
+    <color name="icon_bg_a012">#FFF4EFE3</color>
+    <color name="icon_bg_a013">#FFE7B53C</color>
+    <color name="icon_bg_a020">#FFFFFFFF</color>
+    <color name="icon_bg_a021">#FF121214</color>
+    <color name="icon_bg_a022">#FFF4EFE3</color>
+    <color name="icon_bg_a023">#FFE7B53C</color>
+    <color name="icon_bg_a030">#FFFFFFFF</color>
+    <color name="icon_bg_a031">#FF121214</color>
+    <color name="icon_bg_a032">#FFF4EFE3</color>
+    <color name="icon_bg_a033">#FFE7B53C</color>
+    <color name="icon_bg_a040">#FFFFFFFF</color>
+    <color name="icon_bg_a041">#FF121214</color>
+    <color name="icon_bg_a042">#FFF4EFE3</color>
+    <color name="icon_bg_a043">#FFE7B53C</color>
+    <color name="icon_bg_a050">#FFFFFFFF</color>
+    <color name="icon_bg_a051">#FF121214</color>
+    <color name="icon_bg_a052">#FFF4EFE3</color>
+    <color name="icon_bg_a053">#FFE7B53C</color>
+    <color name="icon_bg_a060">#FFFFFFFF</color>
+    <color name="icon_bg_a061">#FF121214</color>
+    <color name="icon_bg_a062">#FFF4EFE3</color>
+    <color name="icon_bg_a063">#FFE7B53C</color>
+    <color name="icon_bg_a070">#FFFFFFFF</color>
+    <color name="icon_bg_a071">#FF121214</color>
+    <color name="icon_bg_a072">#FFF4EFE3</color>
+    <color name="icon_bg_a073">#FFE7B53C</color>
+    <color name="icon_bg_a080">#FFFFFFFF</color>
+    <color name="icon_bg_a081">#FF121214</color>
+    <color name="icon_bg_a082">#FFF4EFE3</color>
+    <color name="icon_bg_a083">#FFE7B53C</color>
+    <color name="icon_bg_a090">#FFFFFFFF</color>
+    <color name="icon_bg_a091">#FF121214</color>
+    <color name="icon_bg_a092">#FFF4EFE3</color>
+    <color name="icon_bg_a093">#FFE7B53C</color>
+    <color name="icon_bg_a100">#FFFFFFFF</color>
+    <color name="icon_bg_a101">#FF121214</color>
+    <color name="icon_bg_a102">#FFF4EFE3</color>
+    <color name="icon_bg_a103">#FFE7B53C</color>
+    <color name="icon_bg_a110">#FFFFFFFF</color>
+    <color name="icon_bg_a111">#FF121214</color>
+    <color name="icon_bg_a112">#FFF4EFE3</color>
+    <color name="icon_bg_a113">#FFE7B53C</color>
+    <color name="icon_bg_a120">#FFFFFFFF</color>
+    <color name="icon_bg_a121">#FF121214</color>
+    <color name="icon_bg_a122">#FFF4EFE3</color>
+    <color name="icon_bg_a123">#FFE7B53C</color>
+    <color name="icon_bg_a130">#FFFFFFFF</color>
+    <color name="icon_bg_a131">#FF121214</color>
+    <color name="icon_bg_a132">#FFF4EFE3</color>
+    <color name="icon_bg_a133">#FFE7B53C</color>
+    <color name="icon_bg_a140">#FFFFFFFF</color>
+    <color name="icon_bg_a141">#FF121214</color>
+    <color name="icon_bg_a142">#FFF4EFE3</color>
+    <color name="icon_bg_a143">#FFE7B53C</color>
+    <color name="icon_bg_a150">#FFFFFFFF</color>
+    <color name="icon_bg_a151">#FF121214</color>
+    <color name="icon_bg_a152">#FFF4EFE3</color>
+    <color name="icon_bg_a153">#FFE7B53C</color>
+    <color name="icon_bg_a160">#FFFFFFFF</color>
+    <color name="icon_bg_a161">#FF121214</color>
+    <color name="icon_bg_a162">#FFF4EFE3</color>
+    <color name="icon_bg_a163">#FFE7B53C</color>
+    <color name="icon_bg_a170">#FFFFFFFF</color>
+    <color name="icon_bg_a171">#FF121214</color>
+    <color name="icon_bg_a172">#FFF4EFE3</color>
+    <color name="icon_bg_a173">#FFE7B53C</color>
+    <color name="icon_bg_a180">#FFFFFFFF</color>
+    <color name="icon_bg_a181">#FF121214</color>
+    <color name="icon_bg_a182">#FFF4EFE3</color>
+    <color name="icon_bg_a183">#FFE7B53C</color>
+    <color name="icon_bg_a190">#FFFFFFFF</color>
+    <color name="icon_bg_a191">#FF121214</color>
+    <color name="icon_bg_a192">#FFF4EFE3</color>
+    <color name="icon_bg_a193">#FFE7B53C</color>
+    <color name="icon_bg_a200">#FFFFFFFF</color>
+    <color name="icon_bg_a201">#FF121214</color>
+    <color name="icon_bg_a202">#FFF4EFE3</color>
+    <color name="icon_bg_a203">#FFE7B53C</color>
+    <color name="icon_bg_a210">#FFFFFFFF</color>
+    <color name="icon_bg_a211">#FF121214</color>
+    <color name="icon_bg_a212">#FFF4EFE3</color>
+    <color name="icon_bg_a213">#FFE7B53C</color>
+    <color name="icon_bg_a220">#FFFFFFFF</color>
+    <color name="icon_bg_a221">#FF121214</color>
+    <color name="icon_bg_a222">#FFF4EFE3</color>
+    <color name="icon_bg_a223">#FFE7B53C</color>
+    <color name="icon_bg_a230">#FFFFFFFF</color>
+    <color name="icon_bg_a231">#FF121214</color>
+    <color name="icon_bg_a232">#FFF4EFE3</color>
+    <color name="icon_bg_a233">#FFE7B53C</color>
+    <color name="icon_bg_a240">#FFFFFFFF</color>
+    <color name="icon_bg_a241">#FF121214</color>
+    <color name="icon_bg_a242">#FFF4EFE3</color>
+    <color name="icon_bg_a243">#FFE7B53C</color>
+    <color name="icon_bg_a250">#FFFFFFFF</color>
+    <color name="icon_bg_a251">#FF121214</color>
+    <color name="icon_bg_a252">#FFF4EFE3</color>
+    <color name="icon_bg_a253">#FFE7B53C</color>
+    <color name="icon_bg_a260">#FFFFFFFF</color>
+    <color name="icon_bg_a261">#FF121214</color>
+    <color name="icon_bg_a262">#FFF4EFE3</color>
+    <color name="icon_bg_a263">#FFE7B53C</color>
+    <color name="icon_bg_a270">#FFFFFFFF</color>
+    <color name="icon_bg_a271">#FF121214</color>
+    <color name="icon_bg_a272">#FFF4EFE3</color>
+    <color name="icon_bg_a273">#FFE7B53C</color>
+    <color name="icon_bg_a280">#FFFFFFFF</color>
+    <color name="icon_bg_a281">#FF121214</color>
+    <color name="icon_bg_a282">#FFF4EFE3</color>
+    <color name="icon_bg_a283">#FFE7B53C</color>
+    <color name="icon_bg_a290">#FFFFFFFF</color>
+    <color name="icon_bg_a291">#FF121214</color>
+    <color name="icon_bg_a292">#FFF4EFE3</color>
+    <color name="icon_bg_b000">#FFCC3939</color>
+    <color name="icon_bg_b001">#FFCC3939</color>
+    <color name="icon_bg_b002">#FFCC3939</color>
+    <color name="icon_bg_b003">#FFCC3939</color>
+    <color name="icon_bg_b010">#FFCC5E39</color>
+    <color name="icon_bg_b011">#FFCC5E39</color>
+    <color name="icon_bg_b012">#FFCC5E39</color>
+    <color name="icon_bg_b013">#FFCC5E39</color>
+    <color name="icon_bg_b020">#FFCC8339</color>
+    <color name="icon_bg_b021">#FFCC8339</color>
+    <color name="icon_bg_b022">#FFCC8339</color>
+    <color name="icon_bg_b023">#FFCC8339</color>
+    <color name="icon_bg_b030">#FFCCA739</color>
+    <color name="icon_bg_b031">#FFCCA739</color>
+    <color name="icon_bg_b032">#FFCCA739</color>
+    <color name="icon_bg_b033">#FFCCA739</color>
+    <color name="icon_bg_b040">#FFCCCC39</color>
+    <color name="icon_bg_b041">#FFCCCC39</color>
+    <color name="icon_bg_b042">#FFCCCC39</color>
+    <color name="icon_bg_b043">#FFCCCC39</color>
+    <color name="icon_bg_b050">#FFA7CC39</color>
+    <color name="icon_bg_b051">#FFA7CC39</color>
+    <color name="icon_bg_b052">#FFA7CC39</color>
+    <color name="icon_bg_b053">#FFA7CC39</color>
+    <color name="icon_bg_b060">#FF83CC39</color>
+    <color name="icon_bg_b061">#FF83CC39</color>
+    <color name="icon_bg_b062">#FF83CC39</color>
+    <color name="icon_bg_b063">#FF83CC39</color>
+    <color name="icon_bg_b070">#FF5ECC39</color>
+    <color name="icon_bg_b071">#FF5ECC39</color>
+    <color name="icon_bg_b072">#FF5ECC39</color>
+    <color name="icon_bg_b073">#FF5ECC39</color>
+    <color name="icon_bg_b080">#FF39CC39</color>
+    <color name="icon_bg_b081">#FF39CC39</color>
+    <color name="icon_bg_b082">#FF39CC39</color>
+    <color name="icon_bg_b083">#FF39CC39</color>
+    <color name="icon_bg_b090">#FF39CC5E</color>
+    <color name="icon_bg_b091">#FF39CC5E</color>
+    <color name="icon_bg_b092">#FF39CC5E</color>
+    <color name="icon_bg_b093">#FF39CC5E</color>
+    <color name="icon_bg_b100">#FF39CC83</color>
+    <color name="icon_bg_b101">#FF39CC83</color>
+    <color name="icon_bg_b102">#FF39CC83</color>
+    <color name="icon_bg_b103">#FF39CC83</color>
+    <color name="icon_bg_b110">#FF39CCA7</color>
+    <color name="icon_bg_b111">#FF39CCA7</color>
+    <color name="icon_bg_b112">#FF39CCA7</color>
+    <color name="icon_bg_b113">#FF39CCA7</color>
+    <color name="icon_bg_b120">#FF39CCCC</color>
+    <color name="icon_bg_b121">#FF39CCCC</color>
+    <color name="icon_bg_b122">#FF39CCCC</color>
+    <color name="icon_bg_b123">#FF39CCCC</color>
+    <color name="icon_bg_b130">#FF39A7CC</color>
+    <color name="icon_bg_b131">#FF39A7CC</color>
+    <color name="icon_bg_b132">#FF39A7CC</color>
+    <color name="icon_bg_b133">#FF39A7CC</color>
+    <color name="icon_bg_b140">#FF3983CC</color>
+    <color name="icon_bg_b141">#FF3983CC</color>
+    <color name="icon_bg_b142">#FF3983CC</color>
+    <color name="icon_bg_b143">#FF3983CC</color>
+    <color name="icon_bg_b150">#FF395ECC</color>
+    <color name="icon_bg_b151">#FF395ECC</color>
+    <color name="icon_bg_b152">#FF395ECC</color>
+    <color name="icon_bg_b153">#FF395ECC</color>
+    <color name="icon_bg_b160">#FF3939CC</color>
+    <color name="icon_bg_b161">#FF3939CC</color>
+    <color name="icon_bg_b162">#FF3939CC</color>
+    <color name="icon_bg_b163">#FF3939CC</color>
+    <color name="icon_bg_b170">#FF5E39CC</color>
+    <color name="icon_bg_b171">#FF5E39CC</color>
+    <color name="icon_bg_b172">#FF5E39CC</color>
+    <color name="icon_bg_b173">#FF5E39CC</color>
+    <color name="icon_bg_b180">#FF8339CC</color>
+    <color name="icon_bg_b181">#FF8339CC</color>
+    <color name="icon_bg_b182">#FF8339CC</color>
+    <color name="icon_bg_b183">#FF8339CC</color>
+    <color name="icon_bg_b190">#FFA739CC</color>
+    <color name="icon_bg_b191">#FFA739CC</color>
+    <color name="icon_bg_b192">#FFA739CC</color>
+    <color name="icon_bg_b193">#FFA739CC</color>
+    <color name="icon_bg_b200">#FFCC39CC</color>
+    <color name="icon_bg_b201">#FFCC39CC</color>
+    <color name="icon_bg_b202">#FFCC39CC</color>
+    <color name="icon_bg_b203">#FFCC39CC</color>
+    <color name="icon_bg_b210">#FFCC39A7</color>
+    <color name="icon_bg_b211">#FFCC39A7</color>
+    <color name="icon_bg_b212">#FFCC39A7</color>
+    <color name="icon_bg_b213">#FFCC39A7</color>
+    <color name="icon_bg_b220">#FFCC3983</color>
+    <color name="icon_bg_b221">#FFCC3983</color>
+    <color name="icon_bg_b222">#FFCC3983</color>
+    <color name="icon_bg_b223">#FFCC3983</color>
+    <color name="icon_bg_b230">#FFCC395E</color>
+    <color name="icon_bg_b231">#FFCC395E</color>
+    <color name="icon_bg_b232">#FFCC395E</color>
+    <color name="icon_bg_b233">#FFCC395E</color>
+    <color name="icon_bg_b240">#FF377DC0</color>
+    <color name="icon_bg_b241">#FF377DC0</color>
+    <color name="icon_bg_b242">#FF377DC0</color>
+    <color name="icon_bg_b243">#FF377DC0</color>
+    <color name="icon_bg_b250">#FF111111</color>
+    <color name="icon_bg_b251">#FF111111</color>
+    <color name="icon_bg_b252">#FF111111</color>
+    <color name="icon_bg_b253">#FF111111</color>
+    <color name="icon_bg_b260">#FF5A5A60</color>
+    <color name="icon_bg_b261">#FF5A5A60</color>
+    <color name="icon_bg_b262">#FF5A5A60</color>
+    <color name="icon_bg_b263">#FF5A5A60</color>
+    <color name="icon_bg_b270">#FF9CA3AF</color>
+    <color name="icon_bg_b271">#FF9CA3AF</color>
+    <color name="icon_bg_b272">#FF9CA3AF</color>
+    <color name="icon_bg_b273">#FF9CA3AF</color>
+    <color name="icon_bg_b280">#FF7C2D12</color>
+    <color name="icon_bg_b281">#FF7C2D12</color>
+    <color name="icon_bg_b282">#FF7C2D12</color>
+    <color name="icon_bg_b283">#FF7C2D12</color>
+    <color name="icon_bg_b290">#FFE7B53C</color>
+    <color name="icon_bg_b291">#FFE7B53C</color>
+    <color name="icon_bg_b292">#FFE7B53C</color>
+    <color name="icon_bg_c000">#FFCC3939</color>
+    <color name="icon_bg_c001">#FFCC3939</color>
+    <color name="icon_bg_c002">#FFCC3939</color>
+    <color name="icon_bg_c003">#FFCC3939</color>
+    <color name="icon_bg_c010">#FFCC5E39</color>
+    <color name="icon_bg_c011">#FFCC5E39</color>
+    <color name="icon_bg_c012">#FFCC5E39</color>
+    <color name="icon_bg_c013">#FFCC5E39</color>
+    <color name="icon_bg_c020">#FFCC8339</color>
+    <color name="icon_bg_c021">#FFCC8339</color>
+    <color name="icon_bg_c022">#FFCC8339</color>
+    <color name="icon_bg_c023">#FFCC8339</color>
+    <color name="icon_bg_c030">#FFCCA739</color>
+    <color name="icon_bg_c031">#FFCCA739</color>
+    <color name="icon_bg_c032">#FFCCA739</color>
+    <color name="icon_bg_c033">#FFCCA739</color>
+    <color name="icon_bg_c040">#FFCCCC39</color>
+    <color name="icon_bg_c041">#FFCCCC39</color>
+    <color name="icon_bg_c042">#FFCCCC39</color>
+    <color name="icon_bg_c043">#FFCCCC39</color>
+    <color name="icon_bg_c050">#FFA7CC39</color>
+    <color name="icon_bg_c051">#FFA7CC39</color>
+    <color name="icon_bg_c052">#FFA7CC39</color>
+    <color name="icon_bg_c053">#FFA7CC39</color>
+    <color name="icon_bg_c060">#FF83CC39</color>
+    <color name="icon_bg_c061">#FF83CC39</color>
+    <color name="icon_bg_c062">#FF83CC39</color>
+    <color name="icon_bg_c063">#FF83CC39</color>
+    <color name="icon_bg_c070">#FF5ECC39</color>
+    <color name="icon_bg_c071">#FF5ECC39</color>
+    <color name="icon_bg_c072">#FF5ECC39</color>
+    <color name="icon_bg_c073">#FF5ECC39</color>
+    <color name="icon_bg_c080">#FF39CC39</color>
+    <color name="icon_bg_c081">#FF39CC39</color>
+    <color name="icon_bg_c082">#FF39CC39</color>
+    <color name="icon_bg_c083">#FF39CC39</color>
+    <color name="icon_bg_c090">#FF39CC5E</color>
+    <color name="icon_bg_c091">#FF39CC5E</color>
+    <color name="icon_bg_c092">#FF39CC5E</color>
+    <color name="icon_bg_c093">#FF39CC5E</color>
+    <color name="icon_bg_c100">#FF39CC83</color>
+    <color name="icon_bg_c101">#FF39CC83</color>
+    <color name="icon_bg_c102">#FF39CC83</color>
+    <color name="icon_bg_c103">#FF39CC83</color>
+    <color name="icon_bg_c110">#FF39CCA7</color>
+    <color name="icon_bg_c111">#FF39CCA7</color>
+    <color name="icon_bg_c112">#FF39CCA7</color>
+    <color name="icon_bg_c113">#FF39CCA7</color>
+    <color name="icon_bg_c120">#FF39CCCC</color>
+    <color name="icon_bg_c121">#FF39CCCC</color>
+    <color name="icon_bg_c122">#FF39CCCC</color>
+    <color name="icon_bg_c123">#FF39CCCC</color>
+    <color name="icon_bg_c130">#FF39A7CC</color>
+    <color name="icon_bg_c131">#FF39A7CC</color>
+    <color name="icon_bg_c132">#FF39A7CC</color>
+    <color name="icon_bg_c133">#FF39A7CC</color>
+    <color name="icon_bg_c140">#FF3983CC</color>
+    <color name="icon_bg_c141">#FF3983CC</color>
+    <color name="icon_bg_c142">#FF3983CC</color>
+    <color name="icon_bg_c143">#FF3983CC</color>
+    <color name="icon_bg_c150">#FF395ECC</color>
+    <color name="icon_bg_c151">#FF395ECC</color>
+    <color name="icon_bg_c152">#FF395ECC</color>
+    <color name="icon_bg_c153">#FF395ECC</color>
+    <color name="icon_bg_c160">#FF3939CC</color>
+    <color name="icon_bg_c161">#FF3939CC</color>
+    <color name="icon_bg_c162">#FF3939CC</color>
+    <color name="icon_bg_c163">#FF3939CC</color>
+    <color name="icon_bg_c170">#FF5E39CC</color>
+    <color name="icon_bg_c171">#FF5E39CC</color>
+    <color name="icon_bg_c172">#FF5E39CC</color>
+    <color name="icon_bg_c173">#FF5E39CC</color>
+    <color name="icon_bg_c180">#FF8339CC</color>
+    <color name="icon_bg_c181">#FF8339CC</color>
+    <color name="icon_bg_c182">#FF8339CC</color>
+    <color name="icon_bg_c183">#FF8339CC</color>
+    <color name="icon_bg_c190">#FFA739CC</color>
+    <color name="icon_bg_c191">#FFA739CC</color>
+    <color name="icon_bg_c192">#FFA739CC</color>
+    <color name="icon_bg_c193">#FFA739CC</color>
+    <color name="icon_bg_c200">#FFCC39CC</color>
+    <color name="icon_bg_c201">#FFCC39CC</color>
+    <color name="icon_bg_c202">#FFCC39CC</color>
+    <color name="icon_bg_c203">#FFCC39CC</color>
+    <color name="icon_bg_c210">#FFCC39A7</color>
+    <color name="icon_bg_c211">#FFCC39A7</color>
+    <color name="icon_bg_c212">#FFCC39A7</color>
+    <color name="icon_bg_c213">#FFCC39A7</color>
+    <color name="icon_bg_c220">#FFCC3983</color>
+    <color name="icon_bg_c221">#FFCC3983</color>
+    <color name="icon_bg_c222">#FFCC3983</color>
+    <color name="icon_bg_c223">#FFCC3983</color>
+    <color name="icon_bg_c230">#FFCC395E</color>
+    <color name="icon_bg_c231">#FFCC395E</color>
+    <color name="icon_bg_c232">#FFCC395E</color>
+    <color name="icon_bg_c233">#FFCC395E</color>
+    <color name="icon_bg_c240">#FF377DC0</color>
+    <color name="icon_bg_c241">#FF377DC0</color>
+    <color name="icon_bg_c242">#FF377DC0</color>
+    <color name="icon_bg_c243">#FF377DC0</color>
+    <color name="icon_bg_c250">#FF111111</color>
+    <color name="icon_bg_c251">#FF111111</color>
+    <color name="icon_bg_c252">#FF111111</color>
+    <color name="icon_bg_c253">#FF111111</color>
+    <color name="icon_bg_c260">#FF5A5A60</color>
+    <color name="icon_bg_c261">#FF5A5A60</color>
+    <color name="icon_bg_c262">#FF5A5A60</color>
+    <color name="icon_bg_c263">#FF5A5A60</color>
+    <color name="icon_bg_c270">#FF9CA3AF</color>
+    <color name="icon_bg_c271">#FF9CA3AF</color>
+    <color name="icon_bg_c272">#FF9CA3AF</color>
+    <color name="icon_bg_c273">#FF9CA3AF</color>
+    <color name="icon_bg_c280">#FF7C2D12</color>
+    <color name="icon_bg_c281">#FF7C2D12</color>
+    <color name="icon_bg_c282">#FF7C2D12</color>
+    <color name="icon_bg_c283">#FF7C2D12</color>
+    <color name="icon_bg_c290">#FFE7B53C</color>
+    <color name="icon_bg_c291">#FFE7B53C</color>
+    <color name="icon_bg_c292">#FFE7B53C</color>
 </resources>

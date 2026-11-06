@@ -238,7 +238,7 @@ fun SettingsScreen(
                 Swatch(Color(a.iconColor2))
             }
             Divider()
-            Row1("Add this icon to home screen", null, "Uses your exact colors. The app drawer uses the closest of 24 designs.") {
+            Row1("Add this icon to home screen", null, "Uses your exact colors. The app drawer uses the closest of 357 ready-made designs.") {
                 if (!AppIcon.pinOrUpdateShortcut(context, a.iconStyle, a.iconColor, a.iconColor2, ask = true)) {
                     Toast.makeText(context, "Your home screen doesn't allow adding shortcuts", Toast.LENGTH_SHORT).show()
                 }

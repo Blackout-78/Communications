@@ -27,24 +27,34 @@ object AppIcon {
     private data class Preset(val style: IconStyle, val main: Int, val second: Int, val alias: String)
 
     private fun presets(context: Context): List<Preset> =
-        context.resources.getStringArray(R.array.icon_presets).mapIndexed { i, line ->
-            val (s, m, c) = line.split("|")
-            Preset(IconStyle.valueOf(s), android.graphics.Color.parseColor(m), android.graphics.Color.parseColor(c), ".Icon$s${i % 8 + 1}")
+        context.resources.getStringArray(R.array.icon_presets).map { line ->
+            val (s, m, c, alias) = line.split("|")
+            Preset(IconStyle.valueOf(s), android.graphics.Color.parseColor(m), android.graphics.Color.parseColor(c), alias)
         }
 
-    /** Sets the app drawer icon to the closest ready-made design. */
+    /**
+     * Sets the app drawer icon to the closest ready-made design (357 to choose from).
+     * Only the old and new icons are switched, so the change is quick.
+     */
     fun applyDrawerIcon(context: Context, style: IconStyle, main: Int, second: Int) {
-        val all = presets(context)
         val isDefault = style == IconStyle.A && main == DEFAULT_MAIN && second == DEFAULT_SECOND
-        val wanted = if (isDefault) ".Launcher" else all.filter { it.style == style }
-            .minBy { distance(it.main, main) + distance(it.second, second) }.alias
+        val wanted = if (isDefault) ".Home" else presets(context).filter { it.style == style }
+            .minBy { distance(it.main, main) * 2 + distance(it.second, second) }.alias
+        val prefs = context.getSharedPreferences("app_icon", Context.MODE_PRIVATE)
+        val current = prefs.getString("alias", ".Home")!!
+        if (current == wanted && isEnabled(context, wanted)) return
         val pm = context.packageManager
-        val names = listOf(".Launcher") + all.map { it.alias }
         // Turn on the new one first so the app never has zero launcher icons.
-        names.sortedBy { if (it == wanted) 0 else 1 }.forEach { name ->
-            val state = if (name == wanted) PackageManager.COMPONENT_ENABLED_STATE_ENABLED else PackageManager.COMPONENT_ENABLED_STATE_DISABLED
-            runCatching { pm.setComponentEnabledSetting(ComponentName(context, context.packageName + name), state, PackageManager.DONT_KILL_APP) }
+        runCatching { pm.setComponentEnabledSetting(ComponentName(context, context.packageName + wanted), PackageManager.COMPONENT_ENABLED_STATE_ENABLED, PackageManager.DONT_KILL_APP) }
+        if (current != wanted) {
+            runCatching { pm.setComponentEnabledSetting(ComponentName(context, context.packageName + current), PackageManager.COMPONENT_ENABLED_STATE_DISABLED, PackageManager.DONT_KILL_APP) }
         }
+        prefs.edit().putString("alias", wanted).apply()
+    }
+
+    private fun isEnabled(context: Context, alias: String): Boolean {
+        val state = context.packageManager.getComponentEnabledSetting(ComponentName(context, context.packageName + alias))
+        return state == PackageManager.COMPONENT_ENABLED_STATE_ENABLED || (alias == ".Home" && state == PackageManager.COMPONENT_ENABLED_STATE_DEFAULT)
     }
 
     /** Adds the home-screen shortcut in your exact colors, or updates it if it's already there. */

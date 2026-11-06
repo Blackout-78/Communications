@@ -72,6 +72,7 @@ fun ContactsScreen(
     onOpenProfile: (Long) -> Unit,
     onAddContact: () -> Unit,
     onOpenDialpad: () -> Unit,
+    onOpenBackup: () -> Unit,
 ) {
     val state by vm.listState.collectAsStateWithLifecycle()
     val query by vm.query.collectAsStateWithLifecycle()
@@ -127,8 +128,8 @@ fun ContactsScreen(
                         Icon(Icons.Filled.MoreVert, "More options", tint = AppColors.SubText)
                     }
                     DropdownMenu(expanded = moreMenu, onDismissRequest = { moreMenu = false }) {
-                        DropdownMenuItem(text = { Text("Import (coming in Stage 4)") }, onClick = {}, enabled = false)
-                        DropdownMenuItem(text = { Text("Export (coming in Stage 4)") }, onClick = {}, enabled = false)
+                        DropdownMenuItem(text = { Text("Import") }, onClick = { moreMenu = false; onOpenBackup() })
+                        DropdownMenuItem(text = { Text("Export") }, onClick = { moreMenu = false; onOpenBackup() })
                     }
                 }
             }

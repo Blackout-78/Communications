@@ -16,7 +16,7 @@ android {
         // The automatic GitHub build passes its run number, so every new APK installs over the last one.
         val build = (project.findProperty("buildNumber") as String?)?.toIntOrNull() ?: 1
         versionCode = build
-        versionName = "0.3.$build (Stage 3)"
+        versionName = "1.0.$build"
     }
 
     // The release key comes from GitHub's secret settings. It never goes in the repository.

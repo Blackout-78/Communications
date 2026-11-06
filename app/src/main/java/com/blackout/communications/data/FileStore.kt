@@ -36,6 +36,22 @@ class FileStore(private val context: Context) {
         }.getOrNull()
     }
 
+    /** Saves a background picture (up to 1440 px) and returns its path. */
+    suspend fun saveBackground(uri: Uri, name: String): String? = withContext(Dispatchers.IO) {
+        runCatching {
+            val source = ImageDecoder.createSource(context.contentResolver, uri)
+            val bitmap = ImageDecoder.decodeBitmap(source) { decoder, info, _ ->
+                val scale = minOf(1f, 1440f / maxOf(info.size.width, info.size.height))
+                decoder.setTargetSize((info.size.width * scale).toInt().coerceAtLeast(1), (info.size.height * scale).toInt().coerceAtLeast(1))
+                decoder.allocator = ImageDecoder.ALLOCATOR_SOFTWARE
+            }
+            val dir = File(context.filesDir, "backgrounds").apply { mkdirs() }
+            val file = File(dir, "$name.jpg")
+            file.outputStream().use { bitmap.compress(Bitmap.CompressFormat.JPEG, 88, it) }
+            file.absolutePath
+        }.getOrNull()
+    }
+
     fun deletePhoto(path: String?) {
         if (path == null) return
         val file = File(path)

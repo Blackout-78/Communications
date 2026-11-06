@@ -345,13 +345,13 @@ private fun MessageBubble(m: ChatMessage, modifier: Modifier) {
             modifier
                 .widthIn(max = 290.dp)
                 .clip(RoundedCornerShape(topStart = 18.dp, topEnd = 18.dp, bottomStart = if (mine) 18.dp else 4.dp, bottomEnd = if (mine) 4.dp else 18.dp))
-                .background(if (mine) AppColors.Accent else Color(0xFF232327))
+                .background(if (mine) AppColors.MyBubble else AppColors.TheirBubble)
                 .padding(horizontal = if (m.images.isNotEmpty()) 6.dp else 14.dp, vertical = if (m.images.isNotEmpty()) 6.dp else 10.dp),
             verticalArrangement = Arrangement.spacedBy(6.dp),
         ) {
             m.images.forEach { uri -> UriImage(uri, Modifier.widthIn(max = 260.dp).heightIn(max = 320.dp).clip(RoundedCornerShape(12.dp))) }
             if (m.body.isNotBlank()) {
-                Text(m.body, color = if (mine) Color.White else AppColors.Text, fontSize = 15.sp, lineHeight = 21.sp, modifier = Modifier.padding(horizontal = if (m.images.isNotEmpty()) 8.dp else 0.dp))
+                Text(m.body, color = AppColors.onColor(if (mine) AppColors.MyBubble else AppColors.TheirBubble), fontSize = 15.sp, lineHeight = 21.sp, modifier = Modifier.padding(horizontal = if (m.images.isNotEmpty()) 8.dp else 0.dp))
             }
             val time = SimpleDateFormat("h:mm a", Locale.getDefault()).format(Date(m.date))
             val status = when (m.status) {
@@ -366,8 +366,7 @@ private fun MessageBubble(m: ChatMessage, modifier: Modifier) {
                 fontSize = 11.sp,
                 color = when {
                     m.status == ChatMessage.Status.Failed -> Color(0xFFFFD1D1)
-                    mine -> Color.White.copy(alpha = 0.85f)
-                    else -> AppColors.SubText
+                    else -> AppColors.onColor(if (mine) AppColors.MyBubble else AppColors.TheirBubble).copy(alpha = 0.75f)
                 },
                 modifier = Modifier.align(Alignment.End).padding(horizontal = if (m.images.isNotEmpty()) 8.dp else 0.dp),
             )

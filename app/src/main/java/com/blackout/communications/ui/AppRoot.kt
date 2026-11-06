@@ -66,7 +66,16 @@ import com.blackout.communications.ui.contacts.ContactsScreen
 import com.blackout.communications.ui.contacts.ContactsViewModel
 import com.blackout.communications.ui.contacts.EditContactScreen
 import com.blackout.communications.ui.contacts.ProfileScreen
-import com.blackout.communications.ui.placeholder.ComingSoon
+import com.blackout.communications.ui.settings.SettingsScreen
+import com.blackout.communications.ui.theme.ThemeState
+import com.blackout.communications.data.StartTab
+import com.blackout.communications.CommunicationsApp
+import android.graphics.BitmapFactory
+import androidx.compose.foundation.Image
+import androidx.compose.runtime.produceState
+import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.layout.ContentScale
 import com.blackout.communications.ui.theme.AppColors
 
 /** Bottom tabs, in the order from the design: Contacts, Chats, Calls, Settings. */
@@ -101,7 +110,23 @@ fun AppRoot(request: LaunchRequest?, onRequestHandled: () -> Unit) {
     val chatsVm: ChatsViewModel = viewModel()
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
-    var tab by rememberSaveable { mutableStateOf(Tab.Contacts) }
+    val app = context.applicationContext as CommunicationsApp
+    var tab by rememberSaveable {
+        val a = ThemeState.appearance
+        val start = when (a.startTab) {
+            StartTab.Contacts -> Tab.Contacts
+            StartTab.Chats -> Tab.Chats
+            StartTab.Calls -> Tab.Calls
+            StartTab.LastUsed -> Tab.entries.firstOrNull { it.label == a.lastTab } ?: Tab.Contacts
+        }
+        mutableStateOf(start)
+    }
+    var backupFocus by remember { mutableStateOf(false) }
+    // Each tab can have its own colors; remember the tab for "Last used".
+    LaunchedEffect(tab) {
+        ThemeState.activeTab = tab.label
+        if (ThemeState.appearance.lastTab != tab.label) app.updateAppearance { it.copy(lastTab = tab.label) }
+    }
     val stack = remember { mutableStateListOf<Screen>() }
     fun pop() { if (stack.isNotEmpty()) stack.removeAt(stack.lastIndex) }
 
@@ -123,6 +148,7 @@ fun AppRoot(request: LaunchRequest?, onRequestHandled: () -> Unit) {
             is LaunchRequest.Thread -> { stack.clear(); tab = Tab.Chats; stack.add(Screen.Conversation(r.id)) }
             is LaunchRequest.Compose -> { stack.clear(); tab = Tab.Chats; openConversation(r.address, r.text) }
             is LaunchRequest.Contact -> { stack.clear(); tab = Tab.Contacts; stack.add(Screen.Profile(r.id)) }
+            LaunchRequest.Backup -> { stack.clear(); tab = Tab.Settings; backupFocus = true }
         }
         onRequestHandled()
     }
@@ -132,7 +158,18 @@ fun AppRoot(request: LaunchRequest?, onRequestHandled: () -> Unit) {
     val contactsList by contactsVm.listState.collectAsStateWithLifecycle()
     val contactsGroups = contactsList.groups
 
+    val picture = ThemeState.appearance.pictureFor(tab.label)
     Surface(color = AppColors.Background, modifier = Modifier.fillMaxSize()) {
+        // Background picture for the whole app or this tab, dimmed so text stays readable.
+        if (picture != null) {
+            val bitmap by produceState<ImageBitmap?>(null, picture) {
+                value = withContext(Dispatchers.IO) { BitmapFactory.decodeFile(picture)?.asImageBitmap() }
+            }
+            bitmap?.let {
+                Image(it, null, contentScale = ContentScale.Crop, modifier = Modifier.fillMaxSize())
+                Box(Modifier.fillMaxSize().background(AppColors.Background.copy(alpha = ThemeState.appearance.dim)))
+            }
+        }
         Box(Modifier.fillMaxSize().safeDrawingPadding()) {
             when (val top = stack.lastOrNull()) {
                 is Screen.Profile -> ProfileScreen(
@@ -204,9 +241,11 @@ fun AppRoot(request: LaunchRequest?, onRequestHandled: () -> Unit) {
                                 onOpenBlocked = { stack.add(Screen.Blocked) },
                                 onOpenRecordings = { stack.add(Screen.Recordings) },
                             )
-                            Tab.Settings -> ComingSoon(
-                                Tab.Settings.icon, "Settings", "Coming in Stage 4",
-                                "Themes, colors, background pictures, app icon color, and backup with reminders.",
+                            Tab.Settings -> SettingsScreen(
+                                onOpenCallSettings = { stack.add(Screen.CallSettings) },
+                                onOpenBlocked = { stack.add(Screen.Blocked) },
+                                onOpenSpeedDial = { stack.add(Screen.SpeedDial) },
+                                scrollToBackup = backupFocus,
                             )
                         }
                     }

@@ -16,6 +16,7 @@ sealed interface LaunchRequest {
     data class Thread(val id: Long) : LaunchRequest
     data class Compose(val address: String, val text: String) : LaunchRequest
     data class Contact(val id: Long) : LaunchRequest
+    data object Backup : LaunchRequest
 }
 
 class MainActivity : ComponentActivity() {
@@ -43,6 +44,7 @@ class MainActivity : ComponentActivity() {
         val scheme = data?.scheme
         request.value = when (intent.action) {
             ACTION_ADD_CALL -> LaunchRequest.Dial("")
+            ACTION_OPEN_BACKUP -> LaunchRequest.Backup
             ACTION_OPEN_THREAD -> intent.getLongExtra(MessageNotifications.EXTRA_THREAD, -1).takeIf { it >= 0 }?.let { LaunchRequest.Thread(it) }
             ACTION_OPEN_CONTACT -> intent.getLongExtra(EXTRA_CONTACT, -1).takeIf { it >= 0 }?.let { LaunchRequest.Contact(it) }
             Intent.ACTION_DIAL -> LaunchRequest.Dial(if (scheme == "tel") data.schemeSpecificPart.orEmpty() else "")
@@ -64,5 +66,6 @@ class MainActivity : ComponentActivity() {
         const val ACTION_OPEN_THREAD = "com.blackout.communications.OPEN_THREAD"
         const val ACTION_OPEN_CONTACT = "com.blackout.communications.OPEN_CONTACT"
         const val EXTRA_CONTACT = "contact_id"
+        const val ACTION_OPEN_BACKUP = "com.blackout.communications.OPEN_BACKUP"
     }
 }

@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- The 36 app drawer icon colors. Settings picks the closest to your color. -->
+    <array name="icon_presets">
+        <item>#FF377DC0</item>
+        <item>#FFC73838</item>
+        <item>#FFC75538</item>
+        <item>#FFC77338</item>
+        <item>#FFC79138</item>
+        <item>#FFC7AE38</item>
+        <item>#FFC2C738</item>
+        <item>#FFA4C738</item>
+        <item>#FF87C738</item>
+        <item>#FF69C738</item>
+        <item>#FF4BC738</item>
+        <item>#FF38C742</item>
+        <item>#FF38C75F</item>
+        <item>#FF38C77D</item>
+        <item>#FF38C79A</item>
+        <item>#FF38C7B8</item>
+        <item>#FF38B8C7</item>
+        <item>#FF389AC7</item>
+        <item>#FF387DC7</item>
+        <item>#FF385FC7</item>
+        <item>#FF3842C7</item>
+        <item>#FF4B38C7</item>
+        <item>#FF6938C7</item>
+        <item>#FF8738C7</item>
+        <item>#FFA438C7</item>
+        <item>#FFC238C7</item>
+        <item>#FFC738AE</item>
+        <item>#FFC73891</item>
+        <item>#FFC73873</item>
+        <item>#FFC73855</item>
+        <item>#FF111111</item>
+        <item>#FF444444</item>
+        <item>#FF777777</item>
+        <item>#FF7C2D12</item>
+        <item>#FF1E3A8A</item>
+        <item>#FF7C5CFF</item>
+    </array>
+</resources>

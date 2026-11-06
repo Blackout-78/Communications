@@ -11,6 +11,7 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -192,6 +193,28 @@ fun SettingsScreen(
 
         // ------------------------------------------------ 2. App icon
         Section("App icon") {
+            // One icon, or three icons (Contacts, Messages, Call Log).
+            var three by remember { mutableStateOf(AppIcon.threeIcons(context)) }
+            Text("Icons in the app drawer", fontSize = 15.sp, modifier = Modifier.padding(start = 16.dp, top = 14.dp))
+            Row(Modifier.fillMaxWidth().padding(12.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                Box(Modifier.weight(1f)) {
+                    IconModeCard("One icon", "Colors below apply", selected = !three, onClick = {
+                        AppIcon.setThreeIcons(context, false, a.iconStyle, a.iconColor, a.iconColor2); three = false
+                    }) { SingleIconPreview(44.dp) }
+                }
+                Box(Modifier.weight(1f)) {
+                    IconModeCard("Three icons", "Contacts, Messages, Call Log", selected = three, onClick = {
+                        AppIcon.setThreeIcons(context, true, a.iconStyle, a.iconColor, a.iconColor2); three = true
+                    }) { ThreeIconsPreview(26.dp) }
+                }
+            }
+            if (three) {
+                Text(
+                    "The three icons use the original blue and white. The colors below apply to the home-screen shortcut.",
+                    fontSize = 12.sp, color = AppColors.SubText, modifier = Modifier.padding(start = 16.dp, end = 16.dp, bottom = 10.dp),
+                )
+            }
+            Divider()
             // Live preview of your icon, as it will look on the home screen.
             val preview = remember(a.iconStyle, a.iconColor, a.iconColor2) {
                 AppIcon.render(context, a.iconStyle, a.iconColor, a.iconColor2, 288).asImageBitmap()

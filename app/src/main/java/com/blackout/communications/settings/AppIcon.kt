@@ -36,17 +36,49 @@ object AppIcon {
      * Sets the app drawer icon to the closest ready-made design (357 to choose from).
      * Only the old and new icons are switched, so the change is quick.
      */
+    private val TAB_ALIASES = listOf(".OpenContacts", ".OpenChats", ".OpenCalls")
+
+    fun prefs(context: Context) = context.getSharedPreferences("app_icon", Context.MODE_PRIVATE)
+
+    /** True when the user has chosen three icons (Contacts, Messages, Call Log). */
+    fun threeIcons(context: Context) = prefs(context).getBoolean("three", false)
+
+    /** Has the first-run question (one icon or three) been answered? */
+    fun choiceMade(context: Context) = prefs(context).getBoolean("choiceMade", false)
+
+    /** Switches between one icon and three icons in the app drawer. */
+    fun setThreeIcons(context: Context, three: Boolean, style: IconStyle, main: Int, second: Int) {
+        prefs(context).edit().putBoolean("three", three).putBoolean("choiceMade", true).apply()
+        val pm = context.packageManager
+        fun set(alias: String, on: Boolean) = runCatching {
+            pm.setComponentEnabledSetting(
+                ComponentName(context, context.packageName + alias),
+                if (on) PackageManager.COMPONENT_ENABLED_STATE_ENABLED else PackageManager.COMPONENT_ENABLED_STATE_DISABLED,
+                PackageManager.DONT_KILL_APP,
+            )
+        }
+        if (three) {
+            TAB_ALIASES.forEach { set(it, true) }
+            set(prefs(context).getString("alias", ".Home")!!, false)
+        } else {
+            prefs(context).edit().putString("alias", "none").apply() // forces the single icon back on
+            applyDrawerIcon(context, style, main, second)
+            TAB_ALIASES.forEach { set(it, false) }
+        }
+    }
+
     fun applyDrawerIcon(context: Context, style: IconStyle, main: Int, second: Int) {
+        if (threeIcons(context)) return
         val isDefault = style == IconStyle.A && main == DEFAULT_MAIN && second == DEFAULT_SECOND
         val wanted = if (isDefault) ".Home" else presets(context).filter { it.style == style }
             .minBy { distance(it.main, main) * 2 + distance(it.second, second) }.alias
-        val prefs = context.getSharedPreferences("app_icon", Context.MODE_PRIVATE)
+        val prefs = prefs(context)
         val current = prefs.getString("alias", ".Home")!!
         if (current == wanted && isEnabled(context, wanted)) return
         val pm = context.packageManager
         // Turn on the new one first so the app never has zero launcher icons.
         runCatching { pm.setComponentEnabledSetting(ComponentName(context, context.packageName + wanted), PackageManager.COMPONENT_ENABLED_STATE_ENABLED, PackageManager.DONT_KILL_APP) }
-        if (current != wanted) {
+        if (current != wanted && current != "none") {
             runCatching { pm.setComponentEnabledSetting(ComponentName(context, context.packageName + current), PackageManager.COMPONENT_ENABLED_STATE_DISABLED, PackageManager.DONT_KILL_APP) }
         }
         prefs.edit().putString("alias", wanted).apply()

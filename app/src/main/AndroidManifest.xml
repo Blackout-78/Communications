@@ -1247,6 +1247,47 @@
             <intent-filter><action android:name="android.intent.action.MAIN" /><category android:name="android.intent.category.LAUNCHER" /></intent-filter>
         </activity-alias>
 
+        <!-- Three-icon mode: Contacts, Messages and Call Log, each opening its own tab. -->
+        <activity-alias
+            android:name=".OpenContacts"
+            android:enabled="false"
+            android:exported="true"
+            android:icon="@mipmap/ic_tab_contacts"
+            android:label="Contacts"
+            android:roundIcon="@mipmap/ic_tab_contacts"
+            android:targetActivity=".MainActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
+        <activity-alias
+            android:name=".OpenChats"
+            android:enabled="false"
+            android:exported="true"
+            android:icon="@mipmap/ic_tab_messages"
+            android:label="Messages"
+            android:roundIcon="@mipmap/ic_tab_messages"
+            android:targetActivity=".MainActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
+        <activity-alias
+            android:name=".OpenCalls"
+            android:enabled="false"
+            android:exported="true"
+            android:icon="@mipmap/ic_tab_calls"
+            android:label="Call Log"
+            android:roundIcon="@mipmap/ic_tab_calls"
+            android:targetActivity=".MainActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
+
         <!-- The incoming call and in-call screens. -->
         <activity
             android:name=".calls.CallActivity"

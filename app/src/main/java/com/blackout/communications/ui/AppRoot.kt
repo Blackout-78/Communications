@@ -67,6 +67,8 @@ import com.blackout.communications.ui.contacts.ContactsViewModel
 import com.blackout.communications.ui.contacts.EditContactScreen
 import com.blackout.communications.ui.contacts.ProfileScreen
 import com.blackout.communications.ui.settings.SettingsScreen
+import com.blackout.communications.ui.settings.IconChoiceScreen
+import com.blackout.communications.settings.AppIcon
 import com.blackout.communications.ui.theme.ThemeState
 import com.blackout.communications.data.StartTab
 import com.blackout.communications.CommunicationsApp
@@ -149,6 +151,7 @@ fun AppRoot(request: LaunchRequest?, onRequestHandled: () -> Unit) {
             is LaunchRequest.Compose -> { stack.clear(); tab = Tab.Chats; openConversation(r.address, r.text) }
             is LaunchRequest.Contact -> { stack.clear(); tab = Tab.Contacts; stack.add(Screen.Profile(r.id)) }
             LaunchRequest.Backup -> { stack.clear(); tab = Tab.Settings; backupFocus = true }
+            is LaunchRequest.OpenTab -> { stack.clear(); tab = Tab.entries.firstOrNull { it.label == r.tab } ?: tab }
         }
         onRequestHandled()
     }
@@ -157,6 +160,20 @@ fun AppRoot(request: LaunchRequest?, onRequestHandled: () -> Unit) {
 
     val contactsList by contactsVm.listState.collectAsStateWithLifecycle()
     val contactsGroups = contactsList.groups
+
+    var askIcons by remember { mutableStateOf(!AppIcon.choiceMade(context)) }
+    if (askIcons) {
+        Surface(color = AppColors.Background, modifier = Modifier.fillMaxSize()) {
+            Box(Modifier.fillMaxSize().safeDrawingPadding()) {
+                IconChoiceScreen(onChoose = { three ->
+                    val a = ThemeState.appearance
+                    AppIcon.setThreeIcons(context, three, a.iconStyle, a.iconColor, a.iconColor2)
+                    askIcons = false
+                })
+            }
+        }
+        return
+    }
 
     val picture = ThemeState.appearance.pictureFor(tab.label)
     Surface(color = AppColors.Background, modifier = Modifier.fillMaxSize()) {

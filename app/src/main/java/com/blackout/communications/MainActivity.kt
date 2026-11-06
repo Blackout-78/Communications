@@ -17,6 +17,8 @@ sealed interface LaunchRequest {
     data class Compose(val address: String, val text: String) : LaunchRequest
     data class Contact(val id: Long) : LaunchRequest
     data object Backup : LaunchRequest
+    /** Opened from the Contacts, Messages or Call Log icon. */
+    data class OpenTab(val tab: String) : LaunchRequest
 }
 
 class MainActivity : ComponentActivity() {
@@ -42,7 +44,14 @@ class MainActivity : ComponentActivity() {
         intent ?: return
         val data = intent.data
         val scheme = data?.scheme
+        val alias = intent.component?.className.orEmpty()
         request.value = when (intent.action) {
+            Intent.ACTION_MAIN -> when {
+                alias.endsWith(".OpenContacts") -> LaunchRequest.OpenTab("Contacts")
+                alias.endsWith(".OpenChats") -> LaunchRequest.OpenTab("Chats")
+                alias.endsWith(".OpenCalls") -> LaunchRequest.OpenTab("Calls")
+                else -> null
+            }
             ACTION_ADD_CALL -> LaunchRequest.Dial("")
             ACTION_OPEN_BACKUP -> LaunchRequest.Backup
             ACTION_OPEN_THREAD -> intent.getLongExtra(MessageNotifications.EXTRA_THREAD, -1).takeIf { it >= 0 }?.let { LaunchRequest.Thread(it) }

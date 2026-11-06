@@ -62,6 +62,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.blackout.communications.calls.BlockedNumbers
+import com.blackout.communications.calls.Phone
 import com.blackout.communications.data.mainNumber
 import com.blackout.communications.data.title
 import com.blackout.communications.ui.components.Avatar
@@ -74,6 +76,7 @@ fun ProfileScreen(
     contactId: Long,
     onBack: () -> Unit,
     onEdit: () -> Unit,
+    onOpenHistory: () -> Unit,
 ) {
     val context = LocalContext.current
     val data by remember(contactId) { vm.contact(contactId) }.collectAsState(initial = null)
@@ -84,6 +87,11 @@ fun ProfileScreen(
     var confirmDelete by remember { mutableStateOf(false) }
     var ringtoneDialog by remember { mutableStateOf(false) }
     var speedDialDialog by remember { mutableStateOf(false) }
+    // Changes when blocking changes, so the Block row redraws.
+    var blockVersion by remember { mutableStateOf(0) }
+    val blocked = remember(c.numbers, blockVersion) {
+        c.numbers.isNotEmpty() && c.numbers.all { BlockedNumbers.isBlocked(context, it.number) }
+    }
 
     val pickSong = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
         if (uri != null) vm.setRingtone(contactId, uri)
@@ -163,11 +171,23 @@ fun ProfileScreen(
                 }
             }
 
-            // Call history and blocking arrive with the phone features.
             InfoCard {
-                ProfileRow(Icons.Outlined.History, "Call history", "Coming in Stage 2", enabled = false) {}
+                ProfileRow(Icons.Outlined.History, "Call history", null, chevron = true, onClick = onOpenHistory)
                 HorizontalDivider(color = AppColors.Line)
-                ProfileRow(Icons.Outlined.Block, "Block this number", "Coming in Stage 2", color = AppColors.Missed, enabled = false) {}
+                ProfileRow(
+                    Icons.Outlined.Block,
+                    if (blocked) "Unblock this contact" else "Block this contact",
+                    if (blocked) "Calls and texts from them are stopped" else "Stops calls and texts from all their numbers",
+                    color = AppColors.Missed,
+                    enabled = c.numbers.isNotEmpty(),
+                ) {
+                    if (!BlockedNumbers.canUse(context)) {
+                        Toast.makeText(context, "Make Communications your phone app (Calls tab) to block numbers", Toast.LENGTH_LONG).show()
+                    } else {
+                        c.numbers.forEach { n -> if (blocked) BlockedNumbers.unblock(context, n.number) else BlockedNumbers.block(context, n.number) }
+                        blockVersion++
+                    }
+                }
             }
             Spacer(Modifier.height(24.dp))
         }
@@ -274,12 +294,8 @@ private fun ProfileRow(
     }
 }
 
-/**
- * Stage 1 hands calls and texts to the phone's current apps.
- * From Stage 2 and 3, Communications places calls and sends texts itself.
- */
-private fun dial(context: Context, number: String) =
-    launch(context, Intent(Intent.ACTION_DIAL, Uri.fromParts("tel", number, null)))
+/** Calls go through Communications once it's the phone app. Texts open the current texting app until Stage 3. */
+private fun dial(context: Context, number: String) = Phone.call(context, number)
 
 private fun message(context: Context, number: String) =
     launch(context, Intent(Intent.ACTION_SENDTO, Uri.fromParts("smsto", number, null)))

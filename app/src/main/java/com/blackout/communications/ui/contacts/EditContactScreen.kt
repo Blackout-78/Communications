@@ -75,6 +75,7 @@ fun EditContactScreen(
     vm: ContactsViewModel,
     contactId: Long?,
     onDone: (savedId: Long?) -> Unit,
+    prefillNumber: String? = null,
 ) {
     var loaded by remember { mutableStateOf(contactId == null) }
     var original by remember { mutableStateOf<Contact?>(null) }
@@ -83,7 +84,7 @@ fun EditContactScreen(
     var group by remember { mutableStateOf("") }
     var favorite by remember { mutableStateOf(false) }
     var photoPath by remember { mutableStateOf<String?>(null) }
-    val numbers = remember { mutableStateListOf(NumberField("Mobile", "", true)) }
+    val numbers = remember { mutableStateListOf(NumberField("Mobile", prefillNumber.orEmpty(), true)) }
     var error by remember { mutableStateOf<String?>(null) }
 
     LaunchedEffect(contactId) {

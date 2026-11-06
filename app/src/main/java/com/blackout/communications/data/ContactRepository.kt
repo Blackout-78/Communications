@@ -1,6 +1,7 @@
 package com.blackout.communications.data
 
 import android.net.Uri
+import com.blackout.communications.calls.Phone
 import kotlinx.coroutines.flow.Flow
 
 class ContactRepository(
@@ -10,6 +11,15 @@ class ContactRepository(
     fun observeAll(): Flow<List<ContactWithNumbers>> = dao.observeAll()
 
     fun observe(id: Long): Flow<ContactWithNumbers?> = dao.observe(id)
+
+    suspend fun get(id: Long): ContactWithNumbers? = dao.get(id)
+
+    /** Finds the contact who owns a phone number, for caller ID and call history. */
+    suspend fun findByNumber(number: String?): ContactWithNumbers? {
+        val key = Phone.matchKey(number)
+        if (key.length < 3) return null
+        return dao.getAll().firstOrNull { c -> c.numbers.any { Phone.matchKey(it.number) == key } }
+    }
 
     suspend fun save(contact: Contact, numbers: List<PhoneNumber>, previousPhoto: String?): Long {
         val id = dao.save(contact, numbers)

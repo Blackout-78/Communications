@@ -23,6 +23,10 @@ abstract class ContactDao {
     @Query("SELECT * FROM contacts WHERE id = :id")
     abstract suspend fun get(id: Long): ContactWithNumbers?
 
+    @Transaction
+    @Query("SELECT * FROM contacts")
+    abstract suspend fun getAll(): List<ContactWithNumbers>
+
     @Insert
     abstract suspend fun insertContact(contact: Contact): Long
 

@@ -1,7 +1,6 @@
 package com.blackout.communications.ui.contacts
 
 import android.telephony.PhoneNumberUtils
-import android.widget.Toast
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.gestures.detectVerticalDragGestures
@@ -49,7 +48,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
@@ -73,12 +71,12 @@ fun ContactsScreen(
     vm: ContactsViewModel,
     onOpenProfile: (Long) -> Unit,
     onAddContact: () -> Unit,
+    onOpenDialpad: () -> Unit,
 ) {
     val state by vm.listState.collectAsStateWithLifecycle()
     val query by vm.query.collectAsStateWithLifecycle()
     val sort by vm.sort.collectAsStateWithLifecycle()
     val group by vm.groupFilter.collectAsStateWithLifecycle()
-    val context = LocalContext.current
     val listState = rememberLazyListState()
     val scope = rememberCoroutineScope()
 
@@ -183,7 +181,7 @@ fun ContactsScreen(
 
         // Dialpad button (bottom middle) and Add contact button (bottom right).
         FloatingActionButton(
-            onClick = { Toast.makeText(context, "The dialpad arrives in Stage 2", Toast.LENGTH_SHORT).show() },
+            onClick = onOpenDialpad,
             shape = CircleShape,
             containerColor = AppColors.Accent,
             contentColor = Color.White,

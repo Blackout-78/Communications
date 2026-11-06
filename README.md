@@ -45,7 +45,7 @@ These are design previews. The finished app follows this look.
 ## Progress
 
 - [x] **Stage 1:** app skeleton, tab bar, Contacts
-- [ ] **Stage 2:** Calls (becomes your phone app)
+- [x] **Stage 2:** Calls (becomes your phone app)
 - [ ] **Stage 3:** Chats (becomes your texting app)
 - [ ] **Stage 4:** Settings and backup
 

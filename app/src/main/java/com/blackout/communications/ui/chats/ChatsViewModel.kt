@@ -15,6 +15,7 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.blackout.communications.CommunicationsApp
 import com.blackout.communications.calls.Phone
+import com.blackout.communications.chats.ChatCache
 import com.blackout.communications.chats.ChatMessage
 import com.blackout.communications.chats.ChatThread
 import com.blackout.communications.chats.MessageStore
@@ -70,6 +71,7 @@ object Texting {
                 ticks.trySend(Unit)
             }
         }
+        ChatCache.messages[threadId]?.let { send(it) } // show what we had, right away
         context.contentResolver.registerContentObserver(MESSAGES_URI, true, observer)
         ticks.trySend(Unit)
         val job = launch(Dispatchers.IO) {
@@ -84,7 +86,7 @@ object Texting {
 
 class ChatsViewModel(application: Application) : AndroidViewModel(application) {
     private val app = application as CommunicationsApp
-    private val threads = MutableStateFlow<List<ChatThread>>(emptyList())
+    private val threads = MutableStateFlow(ChatCache.threads)
     val groupFilter = MutableStateFlow<String?>(null)
     val ready = MutableStateFlow(false)
 

@@ -28,6 +28,7 @@ enum class IconGlyph(val key: String, val label: String, val defaultAlias: Strin
  * - App drawer icons: Android only allows ready-made icons, so each switches to the closest of 357 designs.
  */
 object AppIcon {
+    private const val NONE = "none"
     const val DEFAULT_MAIN = 0xFF377DC0.toInt()
     const val DEFAULT_SECOND = 0xFFFFFFFF.toInt()
     val TAB_GLYPHS = listOf(IconGlyph.Contacts, IconGlyph.Messages, IconGlyph.Calls)
@@ -53,6 +54,17 @@ object AppIcon {
         applyDrawerIcons(context, style, main, second)
     }
 
+    /**
+     * Run once after each app update, not on every start: switching icons makes Android close
+     * the app's chat bubbles and refresh its screens.
+     */
+    fun applyAfterUpdate(context: Context, style: IconStyle, main: Int, second: Int) {
+        val version = runCatching { context.packageManager.getPackageInfo(context.packageName, 0).longVersionCode }.getOrDefault(0L)
+        if (prefs(context).getLong("appliedVersion", -1) == version) return
+        applyDrawerIcons(context, style, main, second)
+        prefs(context).edit().putLong("appliedVersion", version).apply()
+    }
+
     /** Shows the right icons in the app drawer, each as close as possible to your style and colors. */
     fun applyDrawerIcons(context: Context, style: IconStyle, main: Int, second: Int) {
         val three = threeIcons(context)
@@ -68,14 +80,14 @@ object AppIcon {
                     .minBy { distance(it.main, main) * 2 + distance(it.second, second) }.alias
             }
             // The main icon starts enabled; the others start disabled.
-            val current = p.getString("alias_${g.key}", if (g == IconGlyph.Main) g.defaultAlias else null)
+            val current = p.getString("alias_${g.key}", if (g == IconGlyph.Main) g.defaultAlias else NONE).takeIf { it != NONE }
             if (wanted == current && (wanted == null || isEnabled(context, wanted, g))) return@forEach
             // Turn the new icon on before the old one off, so the app is never missing from the drawer.
             if (wanted != null) set(pm, context, wanted, true)
             if (current != null && current != wanted) set(pm, context, current, false)
             // Earlier versions only had the plain tab icons; turn those off when a styled one replaces them.
-            if (current == null && g != IconGlyph.Main && wanted != g.defaultAlias) set(pm, context, g.defaultAlias, false)
-            p.edit().putString("alias_${g.key}", wanted).apply()
+            if (current == null && g != IconGlyph.Main && wanted != g.defaultAlias && !p.contains("alias_${g.key}")) set(pm, context, g.defaultAlias, false)
+            p.edit().putString("alias_${g.key}", wanted ?: NONE).apply()
         }
     }
 

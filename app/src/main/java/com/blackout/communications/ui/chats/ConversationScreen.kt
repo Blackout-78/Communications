@@ -78,6 +78,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.blackout.communications.CommunicationsApp
 import com.blackout.communications.calls.BlockedNumbers
 import com.blackout.communications.calls.Phone
+import com.blackout.communications.chats.ChatCache
 import com.blackout.communications.chats.ChatMessage
 import com.blackout.communications.chats.ChatsState
 import com.blackout.communications.chats.MessageNotifications
@@ -108,7 +109,7 @@ fun ConversationScreen(
     val context = LocalContext.current
     val app = context.applicationContext as CommunicationsApp
     val scope = rememberCoroutineScope()
-    val messages by remember(threadId) { Texting.observeMessages(context, threadId) }.collectAsState(initial = emptyList())
+    val messages by remember(threadId) { Texting.observeMessages(context, threadId) }.collectAsState(initial = ChatCache.messages[threadId] ?: emptyList())
     val flags by app.chatPrefs.state.collectAsStateWithLifecycle()
 
     var addresses by remember { mutableStateOf<List<String>>(emptyList()) }

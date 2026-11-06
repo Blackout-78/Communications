@@ -33,6 +33,12 @@ data class ChatThread(
  * Reads and writes the phone's message storage. As the texting app, Communications must
  * save every message it receives or sends there itself.
  */
+/** The last loaded chats and conversations, so screens show them instantly while fresh data loads. */
+object ChatCache {
+    @Volatile var threads: List<ChatThread> = emptyList()
+    val messages = java.util.concurrent.ConcurrentHashMap<Long, List<ChatMessage>>()
+}
+
 object MessageStore {
     private val CONVERSATIONS: Uri = Uri.parse("content://mms-sms/conversations?simple=true")
     private val CANONICAL: Uri = Uri.parse("content://mms-sms/canonical-addresses")
@@ -75,10 +81,13 @@ object MessageStore {
                 }
             }
         }
+        ChatCache.threads = out
         return out
     }
 
-    fun messages(context: Context, threadId: Long): List<ChatMessage> {
+    fun messages(context: Context, threadId: Long): List<ChatMessage> = loadMessages(context, threadId).also { ChatCache.messages[threadId] = it }
+
+    private fun loadMessages(context: Context, threadId: Long): List<ChatMessage> {
         val cr = context.contentResolver
         val out = ArrayList<ChatMessage>()
         runCatching {

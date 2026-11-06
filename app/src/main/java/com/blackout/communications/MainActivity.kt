@@ -7,7 +7,9 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.runtime.mutableStateOf
 import com.blackout.communications.chats.MessageNotifications
+import com.blackout.communications.settings.AppIcon
 import com.blackout.communications.ui.AppRoot
+import com.blackout.communications.ui.theme.ThemeState
 import com.blackout.communications.ui.theme.CommunicationsTheme
 
 /** Something another app, a notification or a call asked to open. */
@@ -28,6 +30,7 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         if (savedInstanceState == null) handle(intent)
+        ThemeState.appearance.let { AppIcon.applyAfterUpdate(this, it.iconStyle, it.iconColor, it.iconColor2) }
         setContent {
             CommunicationsTheme {
                 AppRoot(request = request.value, onRequestHandled = { request.value = null })

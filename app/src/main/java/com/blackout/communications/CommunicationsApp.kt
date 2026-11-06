@@ -6,7 +6,6 @@ import com.blackout.communications.data.AppDatabase
 import com.blackout.communications.data.Appearance
 import com.blackout.communications.data.AppearanceSettings
 import com.blackout.communications.backup.BackupReminder
-import com.blackout.communications.settings.AppIcon
 import com.blackout.communications.ui.theme.ThemeState
 import com.blackout.communications.data.CallSettings
 import com.blackout.communications.data.ContactRepository
@@ -19,7 +18,6 @@ class CommunicationsApp : Application() {
         super.onCreate()
         ThemeState.appearance = appearanceSettings.load()
         BackupReminder.schedule(this)
-        ThemeState.appearance.let { AppIcon.applyDrawerIcons(this, it.iconStyle, it.iconColor, it.iconColor2) }
     }
 
     /** Changes the look and saves it. */

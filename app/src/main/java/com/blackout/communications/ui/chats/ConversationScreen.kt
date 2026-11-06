@@ -112,7 +112,7 @@ fun ConversationScreen(
     val messages by remember(threadId) { Texting.observeMessages(context, threadId) }.collectAsState(initial = ChatCache.messages[threadId] ?: emptyList())
     val flags by app.chatPrefs.state.collectAsStateWithLifecycle()
 
-    var addresses by remember { mutableStateOf<List<String>>(emptyList()) }
+    var addresses by remember { mutableStateOf(ChatCache.threads.firstOrNull { it.id == threadId }?.addresses.orEmpty()) }
     var contact by remember { mutableStateOf<ContactWithNumbers?>(null) }
     LaunchedEffect(threadId) {
         addresses = withContext(Dispatchers.IO) { MessageStore.addresses(context, threadId) }
@@ -126,12 +126,18 @@ fun ConversationScreen(
         ChatsState.openThread = threadId
         onDispose { if (ChatsState.openThread == threadId) ChatsState.openThread = null }
     }
-    LaunchedEffect(threadId, messages.size) {
+    val incoming = messages.count { !it.outgoing }
+    LaunchedEffect(threadId, incoming) {
         withContext(Dispatchers.IO) { MessageStore.markRead(context, threadId) }
         MessageNotifications.cancel(context, threadId)
     }
 
     var text by rememberSaveable { mutableStateOf(initialText) }
+    // Messages you just sent, shown at once until the phone's storage has them.
+    val pending = remember { mutableStateListOf<ChatMessage>() }
+    fun saved(p: ChatMessage) = messages.any { m -> m.outgoing && m.body == p.body && m.date >= p.date - 10_000 && m.images.size == p.images.size }
+    val shown = messages + pending.filterNot { saved(it) }
+    LaunchedEffect(messages) { pending.removeAll { saved(it) } }
     val attachments = remember { mutableStateListOf<Uri>() }
     var menu by remember { mutableStateOf(false) }
     var confirmDelete by remember { mutableStateOf(false) }
@@ -191,7 +197,7 @@ fun ConversationScreen(
             HorizontalDivider(color = AppColors.Line)
 
             // Messages, newest at the bottom
-            val items = remember(messages) { withDateBreaks(messages) }
+            val items = remember(shown) { withDateBreaks(shown) }
             LazyColumn(
                 Modifier.weight(1f).fillMaxWidth(),
                 reverseLayout = true,
@@ -263,6 +269,10 @@ fun ConversationScreen(
                         Modifier.size(44.dp).clip(CircleShape).background(if (canSend) AppColors.Accent else AppColors.Card)
                             .clickable(enabled = canSend) {
                                 val to = address ?: return@clickable
+                                pending += ChatMessage(
+                                    id = -System.nanoTime(), isMms = attachments.isNotEmpty(), outgoing = true, body = text.trim(),
+                                    date = System.currentTimeMillis(), status = ChatMessage.Status.Sending, images = attachments.toList(), from = null,
+                                )
                                 if (attachments.isNotEmpty()) Messenger.sendPictures(context, to, text.trim(), attachments.toList(), threadId)
                                 else Messenger.sendText(context, to, text.trim(), threadId)
                                 text = ""
@@ -352,7 +362,8 @@ private fun MessageBubble(m: ChatMessage, modifier: Modifier) {
         ) {
             m.images.forEach { uri -> UriImage(uri, Modifier.widthIn(max = 260.dp).heightIn(max = 320.dp).clip(RoundedCornerShape(12.dp))) }
             if (m.body.isNotBlank()) {
-                Text(m.body, color = AppColors.onColor(if (mine) AppColors.MyBubble else AppColors.TheirBubble), fontSize = 15.sp, lineHeight = 21.sp, modifier = Modifier.padding(horizontal = if (m.images.isNotEmpty()) 8.dp else 0.dp))
+                val textColor = AppColors.onColor(if (mine) AppColors.MyBubble else AppColors.TheirBubble)
+                Text(linkify(m.body, textColor), color = textColor, fontSize = 15.sp, lineHeight = 21.sp, modifier = Modifier.padding(horizontal = if (m.images.isNotEmpty()) 8.dp else 0.dp))
             }
             val time = SimpleDateFormat("h:mm a", Locale.getDefault()).format(Date(m.date))
             val status = when (m.status) {
@@ -392,4 +403,34 @@ fun UriImage(uri: Uri, modifier: Modifier) {
     val b = bitmap
     if (b != null) Image(b, "Picture", contentScale = ContentScale.Crop, modifier = modifier)
     else Box(modifier.size(160.dp).background(Color(0xFF2E2E33)))
+}
+
+/**
+ * Turns web addresses in a message into real links. Tapping one opens your default web browser.
+ * (The browser goes online, not Communications.)
+ */
+private fun linkify(text: String, color: Color): androidx.compose.ui.text.AnnotatedString {
+    val matcher = android.util.Patterns.WEB_URL.matcher(text)
+    return androidx.compose.ui.text.buildAnnotatedString {
+        var last = 0
+        while (matcher.find()) {
+            val start = matcher.start()
+            val end = matcher.end()
+            val raw = text.substring(start, end)
+            // Skip things like "3.5" or "e.g" that only look like addresses.
+            if (!raw.contains('.') || raw.first().isDigit() && !raw.contains('/')) continue
+            append(text.substring(last, start))
+            val url = if (raw.startsWith("http://", true) || raw.startsWith("https://", true)) raw else "https://$raw"
+            withLink(
+                androidx.compose.ui.text.LinkAnnotation.Url(
+                    url,
+                    androidx.compose.ui.text.TextLinkStyles(
+                        androidx.compose.ui.text.SpanStyle(color = color, textDecoration = androidx.compose.ui.text.style.TextDecoration.Underline),
+                    ),
+                ),
+            ) { append(raw) }
+            last = end
+        }
+        append(text.substring(last))
+    }
 }

@@ -87,14 +87,19 @@ object MessageStore {
 
     fun messages(context: Context, threadId: Long): List<ChatMessage> = loadMessages(context, threadId).also { ChatCache.messages[threadId] = it }
 
+    /**
+     * Loads a conversation fast: the newest 500 texts and 200 picture messages,
+     * with all picture-message parts fetched in one query instead of one per message.
+     */
     private fun loadMessages(context: Context, threadId: Long): List<ChatMessage> {
         val cr = context.contentResolver
         val out = ArrayList<ChatMessage>()
+        val arg = arrayOf(threadId.toString())
         runCatching {
             cr.query(
                 Telephony.Sms.CONTENT_URI,
                 arrayOf(Telephony.Sms._ID, Telephony.Sms.ADDRESS, Telephony.Sms.BODY, Telephony.Sms.DATE, Telephony.Sms.TYPE, Telephony.Sms.STATUS),
-                "${Telephony.Sms.THREAD_ID} = ?", arrayOf(threadId.toString()), null,
+                "${Telephony.Sms.THREAD_ID} = ?", arg, "${Telephony.Sms.DATE} DESC LIMIT 500",
             )?.use { c ->
                 while (c.moveToNext()) {
                     val type = c.getInt(4)
@@ -112,44 +117,47 @@ object MessageStore {
                 }
             }
         }
+        val mms = ArrayList<Triple<Long, Long, Int>>() // id, date (s), box
         runCatching {
             cr.query(
-                Telephony.Mms.CONTENT_URI,
-                arrayOf(Telephony.Mms._ID, Telephony.Mms.DATE, Telephony.Mms.MESSAGE_BOX),
-                "${Telephony.Mms.THREAD_ID} = ?", arrayOf(threadId.toString()), null,
-            )?.use { c ->
-                while (c.moveToNext()) {
-                    val id = c.getLong(0)
-                    val box = c.getInt(2)
-                    val (text, images) = mmsParts(context, id)
-                    val status = when (box) {
-                        Telephony.Mms.MESSAGE_BOX_INBOX -> ChatMessage.Status.Received
-                        Telephony.Mms.MESSAGE_BOX_OUTBOX -> ChatMessage.Status.Sending
-                        Telephony.Mms.MESSAGE_BOX_FAILED -> ChatMessage.Status.Failed
-                        else -> ChatMessage.Status.Sent
+                Telephony.Mms.CONTENT_URI, arrayOf(Telephony.Mms._ID, Telephony.Mms.DATE, Telephony.Mms.MESSAGE_BOX),
+                "${Telephony.Mms.THREAD_ID} = ?", arg, "${Telephony.Mms.DATE} DESC LIMIT 200",
+            )?.use { c -> while (c.moveToNext()) mms += Triple(c.getLong(0), c.getLong(1), c.getInt(2)) }
+        }
+        if (mms.isNotEmpty()) {
+            val texts = HashMap<Long, MutableList<String>>()
+            val images = HashMap<Long, MutableList<Uri>>()
+            runCatching {
+                cr.query(
+                    MMS_PART, arrayOf("_id", "mid", "ct", "text"),
+                    "mid IN (${mms.joinToString(",") { it.first.toString() }})", null, "seq ASC",
+                )?.use { c ->
+                    while (c.moveToNext()) {
+                        val mid = c.getLong(1)
+                        val ct = c.getString(2).orEmpty()
+                        when {
+                            ct == "text/plain" -> c.getString(3)?.let { texts.getOrPut(mid) { mutableListOf() } += it }
+                            ct.startsWith("image/") -> images.getOrPut(mid) { mutableListOf() } += Uri.parse("content://mms/part/${c.getLong(0)}")
+                        }
                     }
-                    out += ChatMessage(id, true, box != Telephony.Mms.MESSAGE_BOX_INBOX, text, c.getLong(1) * 1000, status, images, mmsSender(context, id))
                 }
+            }
+            // The sender only matters in group conversations; skip the extra lookups otherwise.
+            val group = (ChatCache.threads.firstOrNull { it.id == threadId }?.addresses?.size ?: 1) > 1
+            mms.forEach { (id, date, box) ->
+                val status = when (box) {
+                    Telephony.Mms.MESSAGE_BOX_INBOX -> ChatMessage.Status.Received
+                    Telephony.Mms.MESSAGE_BOX_OUTBOX -> ChatMessage.Status.Sending
+                    Telephony.Mms.MESSAGE_BOX_FAILED -> ChatMessage.Status.Failed
+                    else -> ChatMessage.Status.Sent
+                }
+                out += ChatMessage(
+                    id, true, box != Telephony.Mms.MESSAGE_BOX_INBOX, texts[id].orEmpty().joinToString("\n"), date * 1000, status,
+                    images[id].orEmpty(), if (group && box == Telephony.Mms.MESSAGE_BOX_INBOX) mmsSender(context, id) else null,
+                )
             }
         }
         return out.sortedBy { it.date }
-    }
-
-    private fun mmsParts(context: Context, id: Long): Pair<String, List<Uri>> {
-        val texts = ArrayList<String>()
-        val images = ArrayList<Uri>()
-        runCatching {
-            context.contentResolver.query(MMS_PART, arrayOf("_id", "ct", "text"), "mid = ?", arrayOf(id.toString()), null)?.use { c ->
-                while (c.moveToNext()) {
-                    val ct = c.getString(1).orEmpty()
-                    when {
-                        ct == "text/plain" -> c.getString(2)?.let { texts += it }
-                        ct.startsWith("image/") -> images += Uri.parse("content://mms/part/${c.getLong(0)}")
-                    }
-                }
-            }
-        }
-        return texts.joinToString("\n") to images
     }
 
     private fun mmsSender(context: Context, id: Long): String? = runCatching {
@@ -263,9 +271,24 @@ object MessageStore {
         runCatching { context.contentResolver.delete(uri, null, null) }
     }
 
-    /** The other people in a conversation. */
-    fun addresses(context: Context, threadId: Long): List<String> =
-        threads(context).firstOrNull { it.id == threadId }?.addresses.orEmpty()
+    /** The other people in a conversation. Looks up only this conversation. */
+    fun addresses(context: Context, threadId: Long): List<String> {
+        ChatCache.threads.firstOrNull { it.id == threadId }?.let { if (it.addresses.isNotEmpty()) return it.addresses }
+        val cr = context.contentResolver
+        val ids = runCatching {
+            cr.query(CONVERSATIONS, arrayOf("recipient_ids"), "_id = ?", arrayOf(threadId.toString()), null)?.use { c ->
+                if (c.moveToFirst()) c.getString(0).orEmpty().split(" ").mapNotNull { it.toLongOrNull() } else emptyList()
+            }
+        }.getOrNull().orEmpty()
+        if (ids.isEmpty()) return emptyList()
+        return runCatching {
+            cr.query(CANONICAL, arrayOf("_id", "address"), "_id IN (${ids.joinToString(",")})", null, null)?.use { c ->
+                val map = HashMap<Long, String>()
+                while (c.moveToNext()) map[c.getLong(0)] = c.getString(1).orEmpty()
+                ids.mapNotNull { map[it] }.filter { it.isNotBlank() }
+            }
+        }.getOrNull().orEmpty()
+    }
 
     fun sameNumber(a: String, b: String) = Phone.matchKey(a) == Phone.matchKey(b)
 }

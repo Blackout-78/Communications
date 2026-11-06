@@ -75,7 +75,10 @@ object Texting {
         context.contentResolver.registerContentObserver(MESSAGES_URI, true, observer)
         ticks.trySend(Unit)
         val job = launch(Dispatchers.IO) {
-            for (t in ticks) send(MessageStore.messages(context, threadId))
+            for (t in ticks) {
+                kotlinx.coroutines.delay(80) // one reload for a burst of changes
+                send(MessageStore.messages(context, threadId))
+            }
         }
         awaitClose {
             context.contentResolver.unregisterContentObserver(observer)
@@ -104,9 +107,15 @@ class ChatsViewModel(application: Application) : AndroidViewModel(application) {
         }.sortedWith(compareByDescending<ThreadRow> { it.pinned }.thenByDescending { it.thread.date })
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
-    private val observer = object : ContentObserver(Handler(Looper.getMainLooper())) {
-        override fun onChange(selfChange: Boolean) = refresh()
+    private val handler = Handler(Looper.getMainLooper())
+    private val observer = object : ContentObserver(handler) {
+        override fun onChange(selfChange: Boolean) {
+            // One refresh for a burst of changes (sending a text changes storage several times).
+            handler.removeCallbacksAndMessages(REFRESH)
+            handler.postAtTime({ refresh() }, REFRESH, android.os.SystemClock.uptimeMillis() + 150)
+        }
     }
+    private companion object { val REFRESH = Any() }
     private var observing = false
 
     init { refresh() }

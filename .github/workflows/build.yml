@@ -40,7 +40,10 @@ jobs:
           SIGNING_STORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
         run: |
           PW=$(printf '%s' "$SIGNING_STORE_PASSWORD" | tr -d ' \r\n\t')
-          if ! keytool -list -keystore "$SIGNING_STORE_FILE" -storepass "$PW" > /dev/null; then
+          # Fingerprints only (never the secret values), to tell which secret was pasted wrong.
+          echo "key file: $(wc -c < "$SIGNING_STORE_FILE") bytes, sha256 $(sha256sum "$SIGNING_STORE_FILE" | cut -c1-16)"
+          echo "password: ${#PW} characters, sha256 $(printf '%s' "$PW" | sha256sum | cut -c1-16)"
+          if ! keytool -list -keystore "$SIGNING_STORE_FILE" -storepass "$PW" > /dev/null 2>&1; then
             echo "::error::The key or KEYSTORE_PASSWORD secret doesn't match. Paste both again from github-secrets.txt."
             exit 1
           fi

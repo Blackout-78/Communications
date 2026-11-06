@@ -49,18 +49,17 @@ These are design previews. The finished app follows this look.
 - [ ] **Stage 3:** Chats (becomes your texting app)
 - [ ] **Stage 4:** Settings and backup
 
-## Build it
+## Download and install
 
-Communications runs on Android phones only. You build it on a computer (these steps use Windows), then install it on your phone.
+Communications runs on Android phones only (Android 10 or newer).
 
-1. Install [Android Studio](https://developer.android.com/studio).
-2. Download this repo: click **Code**, then **Download ZIP**, and unzip it.
-3. In Android Studio, click **Open** and pick the unzipped `Communications` folder.
-4. Wait for the "Gradle sync" bar at the bottom to finish.
-5. Plug in your phone with USB debugging on, or start an emulator.
-6. Click the green **Run** button.
+1. On your phone, open the [latest release](https://github.com/Blackout-78/Communications/releases/latest).
+2. Tap the file that ends in **.apk** to download it.
+3. Open the downloaded file.
+4. If your phone asks, allow your browser to **install unknown apps**.
+5. Tap **Install**.
 
-Your phone needs Android 10 or newer.
+New builds install over the old one and keep your contacts. GitHub builds a new APK automatically whenever the code changes.
 
 ## License
 

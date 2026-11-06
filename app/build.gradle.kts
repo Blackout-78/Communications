@@ -13,17 +13,31 @@ android {
         applicationId = "com.blackout.communications"
         minSdk = 29
         targetSdk = 35
-        versionCode = 1
-        versionName = "0.1.0-stage1"
+        // The automatic GitHub build passes its run number, so every new APK installs over the last one.
+        val build = (project.findProperty("buildNumber") as String?)?.toIntOrNull() ?: 1
+        versionCode = build
+        versionName = "0.1.$build (Stage 1)"
+    }
+
+    // The release key comes from GitHub's secret settings. It never goes in the repository.
+    val keystorePath: String? = System.getenv("SIGNING_STORE_FILE")
+    signingConfigs {
+        if (keystorePath != null) {
+            create("release") {
+                storeFile = file(keystorePath)
+                storePassword = System.getenv("SIGNING_STORE_PASSWORD")
+                keyAlias = System.getenv("SIGNING_KEY_ALIAS")
+                keyPassword = System.getenv("SIGNING_STORE_PASSWORD")
+            }
+        }
     }
 
     buildTypes {
         release {
             isMinifyEnabled = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
-            // Signed with the debug key so the release APK installs without extra setup.
-            // Replace with your own signing key before sharing builds publicly.
-            signingConfig = signingConfigs.getByName("debug")
+            // Without the secret key (for example a build on someone else's computer), fall back to the debug key.
+            signingConfig = if (keystorePath != null) signingConfigs.getByName("release") else signingConfigs.getByName("debug")
         }
     }
     compileOptions {

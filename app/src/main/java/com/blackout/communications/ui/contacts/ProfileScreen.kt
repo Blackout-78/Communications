@@ -1,0 +1,293 @@
+package com.blackout.communications.ui.contacts
+
+import android.content.ActivityNotFoundException
+import android.content.Context
+import android.content.Intent
+import android.net.Uri
+import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
+import androidx.compose.material.icons.outlined.Block
+import androidx.compose.material.icons.outlined.ChatBubbleOutline
+import androidx.compose.material.icons.outlined.Dialpad
+import androidx.compose.material.icons.outlined.Edit
+import androidx.compose.material.icons.outlined.Group
+import androidx.compose.material.icons.outlined.History
+import androidx.compose.material.icons.outlined.MusicNote
+import androidx.compose.material.icons.outlined.Phone
+import androidx.compose.material.icons.outlined.StarOutline
+import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.Star
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.Switch
+import androidx.compose.material3.SwitchDefaults
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.blackout.communications.data.mainNumber
+import com.blackout.communications.data.title
+import com.blackout.communications.ui.components.Avatar
+import com.blackout.communications.ui.components.InfoCard
+import com.blackout.communications.ui.theme.AppColors
+
+@Composable
+fun ProfileScreen(
+    vm: ContactsViewModel,
+    contactId: Long,
+    onBack: () -> Unit,
+    onEdit: () -> Unit,
+) {
+    val context = LocalContext.current
+    val data by remember(contactId) { vm.contact(contactId) }.collectAsState(initial = null)
+    val owners by vm.speedDialOwners.collectAsStateWithLifecycle()
+    val c = data ?: return
+
+    var menu by remember { mutableStateOf(false) }
+    var confirmDelete by remember { mutableStateOf(false) }
+    var ringtoneDialog by remember { mutableStateOf(false) }
+    var speedDialDialog by remember { mutableStateOf(false) }
+
+    val pickSong = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+        if (uri != null) vm.setRingtone(contactId, uri)
+    }
+
+    Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
+        // Top bar: back, edit, favorite star, more
+        Row(Modifier.fillMaxWidth().padding(start = 4.dp, end = 4.dp, top = 12.dp), verticalAlignment = Alignment.CenterVertically) {
+            IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back to Contacts") }
+            Spacer(Modifier.weight(1f))
+            IconButton(onClick = onEdit) { Icon(Icons.Outlined.Edit, "Edit contact") }
+            IconButton(onClick = { vm.setFavorite(contactId, !c.contact.favorite) }) {
+                if (c.contact.favorite) Icon(Icons.Filled.Star, "Remove from favorites", tint = AppColors.Favorite)
+                else Icon(Icons.Outlined.StarOutline, "Add to favorites")
+            }
+            androidx.compose.foundation.layout.Box {
+                IconButton(onClick = { menu = true }) { Icon(Icons.Filled.MoreVert, "More options") }
+                DropdownMenu(expanded = menu, onDismissRequest = { menu = false }) {
+                    DropdownMenuItem(text = { Text("Delete contact", color = AppColors.Missed) }, onClick = { menu = false; confirmDelete = true })
+                }
+            }
+        }
+
+        // Picture, name, group
+        Column(Modifier.fillMaxWidth().padding(top = 8.dp, bottom = 20.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+            Avatar(c.title, c.contact.photoPath, 140.dp)
+            Text(c.title, fontSize = 28.sp, fontWeight = FontWeight.SemiBold, modifier = Modifier.padding(top = 14.dp))
+            if (c.contact.groupName.isNotBlank()) Text(c.contact.groupName, color = AppColors.SubText, fontSize = 14.sp)
+        }
+
+        Column(Modifier.padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+            // Big Call and Message buttons
+            val main = c.mainNumber
+            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                BigButton("Call", Icons.Outlined.Phone, primary = true, enabled = main != null, modifier = Modifier.weight(1f)) {
+                    main?.let { dial(context, it.number) }
+                }
+                BigButton("Message", Icons.Outlined.ChatBubbleOutline, primary = false, enabled = main != null, modifier = Modifier.weight(1f)) {
+                    main?.let { message(context, it.number) }
+                }
+            }
+
+            // Every number, each with its own message and call buttons
+            if (c.numbers.isNotEmpty()) {
+                InfoCard {
+                    c.numbers.sortedByDescending { it.isMain }.forEachIndexed { i, n ->
+                        if (i > 0) HorizontalDivider(color = AppColors.Line)
+                        Row(Modifier.fillMaxWidth().heightIn(min = 64.dp).padding(start = 16.dp, end = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+                            Column(Modifier.weight(1f)) {
+                                Text(formatNumber(n.number), fontSize = 16.sp)
+                                Text(if (n.isMain) "${n.label} · Main" else n.label, color = AppColors.SubText, fontSize = 13.sp)
+                            }
+                            IconButton(onClick = { message(context, n.number) }) { Icon(Icons.Outlined.ChatBubbleOutline, "Message ${n.number}", tint = AppColors.Accent) }
+                            IconButton(onClick = { dial(context, n.number) }) { Icon(Icons.Outlined.Phone, "Call ${n.number}", tint = AppColors.Accent) }
+                        }
+                    }
+                }
+            }
+
+            // Ringtone, speed dial, group, favorite
+            InfoCard {
+                ProfileRow(Icons.Outlined.MusicNote, "Ringtone", c.contact.ringtoneName?.let { "$it · from your music" } ?: "Default ringtone", chevron = true) { ringtoneDialog = true }
+                HorizontalDivider(color = AppColors.Line)
+                val key = c.contact.speedDial
+                ProfileRow(Icons.Outlined.Dialpad, "Speed dial", if (key != null) "Hold $key on the dialpad to call" else "Not set", value = key?.toString(), chevron = true) { speedDialDialog = true }
+                HorizontalDivider(color = AppColors.Line)
+                ProfileRow(Icons.Outlined.Group, "Group", null, value = c.contact.groupName.ifBlank { "None" }, chevron = true, onClick = onEdit)
+                HorizontalDivider(color = AppColors.Line)
+                Row(Modifier.fillMaxWidth().heightIn(min = 56.dp).padding(horizontal = 16.dp), verticalAlignment = Alignment.CenterVertically) {
+                    Icon(Icons.Outlined.StarOutline, null, tint = AppColors.SubText, modifier = Modifier.size(20.dp))
+                    Text("Favorite", fontSize = 15.sp, modifier = Modifier.padding(start = 14.dp).weight(1f))
+                    Switch(
+                        checked = c.contact.favorite,
+                        onCheckedChange = { vm.setFavorite(contactId, it) },
+                        colors = SwitchDefaults.colors(checkedTrackColor = AppColors.Accent, checkedThumbColor = Color.White),
+                    )
+                }
+            }
+
+            // Call history and blocking arrive with the phone features.
+            InfoCard {
+                ProfileRow(Icons.Outlined.History, "Call history", "Coming in Stage 2", enabled = false) {}
+                HorizontalDivider(color = AppColors.Line)
+                ProfileRow(Icons.Outlined.Block, "Block this number", "Coming in Stage 2", color = AppColors.Missed, enabled = false) {}
+            }
+            Spacer(Modifier.height(24.dp))
+        }
+    }
+
+    if (confirmDelete) {
+        AlertDialog(
+            onDismissRequest = { confirmDelete = false },
+            title = { Text("Delete ${c.title}?") },
+            text = { Text("This removes the contact and their picture from this phone. It can't be undone.") },
+            confirmButton = { TextButton(onClick = { confirmDelete = false; vm.delete(contactId); onBack() }) { Text("Delete", color = AppColors.Missed) } },
+            dismissButton = { TextButton(onClick = { confirmDelete = false }) { Text("Cancel") } },
+        )
+    }
+
+    if (ringtoneDialog) {
+        AlertDialog(
+            onDismissRequest = { ringtoneDialog = false },
+            title = { Text("Ringtone") },
+            text = { Text("Pick a song from your phone. The app keeps its own copy, so the ringtone still works if the original file is moved or deleted.") },
+            confirmButton = { TextButton(onClick = { ringtoneDialog = false; pickSong.launch(arrayOf("audio/*")) }) { Text("Pick a song") } },
+            dismissButton = {
+                TextButton(onClick = { ringtoneDialog = false; vm.setRingtone(contactId, null) }) { Text("Use default") }
+            },
+        )
+    }
+
+    if (speedDialDialog) {
+        AlertDialog(
+            onDismissRequest = { speedDialDialog = false },
+            title = { Text("Speed dial key") },
+            text = {
+                Column {
+                    Text("Hold this key on the dialpad to call ${c.title}. Key 1 is voicemail.", color = AppColors.SubText, fontSize = 14.sp)
+                    Spacer(Modifier.height(8.dp))
+                    (2..9).forEach { key ->
+                        val owner = owners[key]
+                        val ownerText = when {
+                            owner == null -> "Empty"
+                            owner.contact.id == contactId -> "This contact"
+                            else -> "${owner.title} (will be replaced)"
+                        }
+                        Row(
+                            Modifier.fillMaxWidth().clip(RoundedCornerShape(8.dp))
+                                .clickable { vm.setSpeedDial(contactId, key); speedDialDialog = false }
+                                .padding(vertical = 10.dp, horizontal = 4.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            Text("$key", fontSize = 18.sp, fontWeight = FontWeight.SemiBold, modifier = Modifier.size(width = 32.dp, height = 24.dp))
+                            Text(ownerText, color = if (owner?.contact?.id == contactId) AppColors.Accent else AppColors.SubText)
+                        }
+                    }
+                }
+            },
+            confirmButton = { TextButton(onClick = { speedDialDialog = false }) { Text("Close") } },
+            dismissButton = {
+                if (c.contact.speedDial != null) {
+                    TextButton(onClick = { vm.setSpeedDial(contactId, null); speedDialDialog = false }) { Text("Remove") }
+                }
+            },
+        )
+    }
+}
+
+@Composable
+private fun BigButton(label: String, icon: ImageVector, primary: Boolean, enabled: Boolean, modifier: Modifier, onClick: () -> Unit) {
+    Column(
+        modifier = modifier
+            .height(64.dp)
+            .clip(RoundedCornerShape(16.dp))
+            .background(if (primary) AppColors.Accent else AppColors.Card)
+            .clickable(enabled = enabled, onClick = onClick),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center,
+    ) {
+        val tint = if (primary) Color.White else AppColors.Text
+        Icon(icon, null, tint = tint)
+        Text(label, color = tint, fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
+    }
+}
+
+@Composable
+private fun ProfileRow(
+    icon: ImageVector,
+    label: String,
+    sub: String?,
+    value: String? = null,
+    chevron: Boolean = false,
+    color: Color = AppColors.Text,
+    enabled: Boolean = true,
+    onClick: () -> Unit,
+) {
+    Row(
+        Modifier.fillMaxWidth().clickable(enabled = enabled, onClick = onClick).heightIn(min = 56.dp).padding(horizontal = 16.dp, vertical = 8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Icon(icon, null, tint = if (color == AppColors.Text) AppColors.SubText else color, modifier = Modifier.size(20.dp))
+        Column(Modifier.padding(start = 14.dp).weight(1f)) {
+            Text(label, color = color, fontSize = 15.sp)
+            if (sub != null) Text(sub, color = AppColors.SubText, fontSize = 13.sp)
+        }
+        if (value != null) Text(value, color = AppColors.SubText, fontSize = 14.sp)
+        if (chevron) Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, null, tint = AppColors.SubText)
+    }
+}
+
+/**
+ * Stage 1 hands calls and texts to the phone's current apps.
+ * From Stage 2 and 3, Communications places calls and sends texts itself.
+ */
+private fun dial(context: Context, number: String) =
+    launch(context, Intent(Intent.ACTION_DIAL, Uri.fromParts("tel", number, null)))
+
+private fun message(context: Context, number: String) =
+    launch(context, Intent(Intent.ACTION_SENDTO, Uri.fromParts("smsto", number, null)))
+
+private fun launch(context: Context, intent: Intent) {
+    try {
+        context.startActivity(intent)
+    } catch (e: ActivityNotFoundException) {
+        Toast.makeText(context, "No app found to do that", Toast.LENGTH_SHORT).show()
+    }
+}

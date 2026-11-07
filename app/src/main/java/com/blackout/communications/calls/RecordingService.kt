@@ -75,25 +75,72 @@ class RecordingService : Service() {
             put(MediaStore.Audio.Media.RELATIVE_PATH, folder())
             put(MediaStore.Audio.Media.IS_PENDING, 1)
         }
-        try {
-            val item = contentResolver.insert(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, values)!!
-            uri = item
-            fd = contentResolver.openFileDescriptor(item, "w")!!
-            val r = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) MediaRecorder(this) else @Suppress("DEPRECATION") MediaRecorder()
-            r.setAudioSource(MediaRecorder.AudioSource.MIC)
-            r.setOutputFormat(MediaRecorder.OutputFormat.MPEG_4)
-            r.setAudioEncoder(MediaRecorder.AudioEncoder.AAC)
-            r.setAudioSamplingRate(44_100)
-            r.setAudioEncodingBitRate(128_000)
-            r.setOutputFile(fd!!.fileDescriptor)
-            r.prepare()
-            r.start()
-            recorder = r
-            CallManager.recording.value = number
-        } catch (e: Exception) {
-            Toast.makeText(this, "Couldn't start recording", Toast.LENGTH_SHORT).show()
-            cleanUp(keep = false)
-            stopSelf()
+        val prefs = getSharedPreferences("recording", MODE_PRIVATE)
+        // -1 = not tested yet, 1 = the call line records on this phone, 0 = microphone only
+        val lineWorks = prefs.getInt("voiceCallWorks", -1)
+        val first = if (lineWorks == 0) MediaRecorder.AudioSource.MIC else MediaRecorder.AudioSource.VOICE_CALL
+        if (!begin(values, first)) {
+            if (first == MediaRecorder.AudioSource.VOICE_CALL) prefs.edit().putInt("voiceCallWorks", 0).apply()
+            if (first == MediaRecorder.AudioSource.MIC || !begin(values, MediaRecorder.AudioSource.MIC)) {
+                Toast.makeText(this, "Couldn't start recording", Toast.LENGTH_SHORT).show()
+                cleanUp(keep = false)
+                stopSelf()
+                return
+            }
+        }
+        CallManager.recording.value = number
+        CallManager.recordingBothSides.value = source == MediaRecorder.AudioSource.VOICE_CALL
+        // The call line can "work" but record only silence on phones that block it. Check after 2.5 s.
+        if (source == MediaRecorder.AudioSource.VOICE_CALL && lineWorks != 1) {
+            handler.postDelayed({ checkSound(values, 0) }, 800)
+        }
+    }
+
+    private val handler = android.os.Handler(android.os.Looper.getMainLooper())
+    private var source = MediaRecorder.AudioSource.MIC
+
+    /** Starts recording from [audioSource] into a new file. Returns false if this phone refuses it. */
+    private fun begin(values: ContentValues, audioSource: Int): Boolean = try {
+        val item = contentResolver.insert(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, values)!!
+        uri = item
+        fd = contentResolver.openFileDescriptor(item, "w")!!
+        val r = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) MediaRecorder(this) else @Suppress("DEPRECATION") MediaRecorder()
+        recorder = r
+        r.setAudioSource(audioSource)
+        r.setOutputFormat(MediaRecorder.OutputFormat.MPEG_4)
+        r.setAudioEncoder(MediaRecorder.AudioEncoder.AAC)
+        r.setAudioSamplingRate(44_100)
+        r.setAudioEncodingBitRate(128_000)
+        r.setOutputFile(fd!!.fileDescriptor)
+        r.prepare()
+        r.start()
+        source = audioSource
+        true
+    } catch (e: Exception) {
+        cleanUp(keep = false)
+        false
+    }
+
+    /** Samples the volume a few times; if the call line gave only silence, switch to the microphone. */
+    private fun checkSound(values: ContentValues, tries: Int) {
+        val r = recorder ?: return
+        val level = runCatching { r.maxAmplitude }.getOrDefault(0)
+        val prefs = getSharedPreferences("recording", MODE_PRIVATE)
+        when {
+            level > 0 -> prefs.edit().putInt("voiceCallWorks", 1).apply()
+            tries < 3 -> handler.postDelayed({ checkSound(values, tries + 1) }, 600)
+            else -> {
+                prefs.edit().putInt("voiceCallWorks", 0).apply()
+                runCatching { r.stop() }
+                cleanUp(keep = false)
+                val number = CallManager.recording.value
+                if (begin(values, MediaRecorder.AudioSource.MIC)) {
+                    CallManager.recording.value = number
+                    CallManager.recordingBothSides.value = false
+                } else {
+                    stopSelf()
+                }
+            }
         }
     }
 
@@ -104,6 +151,7 @@ class RecordingService : Service() {
     }
 
     private fun cleanUp(keep: Boolean) {
+        if (!keep) handler.removeCallbacksAndMessages(null)
         recorder?.runCatching { release() }
         recorder = null
         fd?.runCatching { close() }
@@ -117,9 +165,11 @@ class RecordingService : Service() {
         }
         uri = null
         CallManager.recording.value = null
+        CallManager.recordingBothSides.value = false
     }
 
     override fun onDestroy() {
+        handler.removeCallbacksAndMessages(null)
         finish()
         super.onDestroy()
     }

@@ -34,6 +34,11 @@ class CallActivity : ComponentActivity() {
                 val audio by CallManager.audio.collectAsStateWithLifecycle()
                 val prefs by app.callSettings.state.collectAsStateWithLifecycle()
                 val recording by CallManager.recording.collectAsStateWithLifecycle()
+                val bothSides by CallManager.recordingBothSides.collectAsStateWithLifecycle()
+                // "Turn on speaker when recording", unless the phone records the call line directly.
+                LaunchedEffect(recording != null, bothSides) {
+                    if (recording != null && !bothSides && prefs.speakerWhenRecording) CallManager.setRoute(CallAudioState.ROUTE_SPEAKER)
+                }
 
                 LaunchedEffect(calls.isEmpty()) { if (calls.isEmpty()) finish() }
 
@@ -67,6 +72,12 @@ class CallActivity : ComponentActivity() {
                         main = main,
                         audio = audio,
                         recording = recording != null,
+                        recordingNote = when {
+                            recording == null || bothSides -> null
+                            audio?.route == CallAudioState.ROUTE_SPEAKER -> null
+                            audio?.route == CallAudioState.ROUTE_BLUETOOTH -> "Bluetooth: the recording may be silent. Tap Speaker to record both voices."
+                            else -> "Only your voice is recorded. Tap Speaker to record both voices."
+                        },
                         onToggleRecord = {
                             if (recording != null) RecordingService.stop(this)
                             else RecordingService.start(this, main.name, main.number)

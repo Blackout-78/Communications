@@ -223,6 +223,7 @@ fun InCallScreen(
     recording: Boolean,
     onToggleRecord: () -> Unit,
     onAddCall: () -> Unit,
+    recordingNote: String? = null,
 ) {
     var showKeypad by remember { mutableStateOf(false) }
     var showManage by remember { mutableStateOf(false) }
@@ -254,6 +255,12 @@ fun InCallScreen(
                 Text(formatNumber(main.number), color = AppColors.SubText, fontSize = 15.sp)
             }
             CallStatus(main, recording)
+            if (recordingNote != null) {
+                Text(
+                    recordingNote, color = AppColors.Missed, fontSize = 13.sp, textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                    modifier = Modifier.padding(horizontal = 32.dp, vertical = 6.dp),
+                )
+            }
 
             Spacer(Modifier.weight(1f))
 

@@ -48,6 +48,9 @@ object CallManager {
     /** Number of the call being recorded, or null. */
     val recording = MutableStateFlow<String?>(null)
 
+    /** True when the recording uses the call line (both voices in every mode), false when it uses the microphone. */
+    val recordingBothSides = MutableStateFlow(false)
+
     var service: CallService? = null
 
     /** Lets the service react when a call changes (stop ringing, update notifications). */

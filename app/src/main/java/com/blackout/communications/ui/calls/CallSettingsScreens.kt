@@ -227,7 +227,13 @@ fun CallSettingsScreen(contactsVm: ContactsViewModel, onBack: () -> Unit, onOpen
 
             SectionTitle("Recording")
             InfoCard {
-                ToggleRow("Auto-record all calls", "Your voice records clearly. The other person records clearly only on speakerphone.", prefs.autoRecord) { v -> settings.update { it.copy(autoRecord = v) } }
+                ToggleRow("Auto-record all calls", "Communications tests whether your phone allows recording both voices directly. If not, the other person is only recorded on speaker.", prefs.autoRecord) { v -> settings.update { it.copy(autoRecord = v) } }
+                HorizontalDivider(color = AppColors.Line)
+                ToggleRow(
+                    "Turn on speaker when recording",
+                    "Most phones only let apps record through the microphone, so the other person is only recorded on speaker.",
+                    prefs.speakerWhenRecording,
+                ) { v -> settings.update { it.copy(speakerWhenRecording = v) } }
                 HorizontalDivider(color = AppColors.Line)
                 LinkRow("Never record these contacts", "${prefs.recordExempt.size}") { pickExempt = true }
                 HorizontalDivider(color = AppColors.Line)

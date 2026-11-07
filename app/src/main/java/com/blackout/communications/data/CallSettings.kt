@@ -22,6 +22,7 @@ data class CallPrefs(
     val quickReplies: List<String> = DEFAULT_REPLIES,
     val autoRecord: Boolean = false,
     val recordExempt: Set<Long> = emptySet(),
+    val speakerWhenRecording: Boolean = false,
 ) {
     companion object {
         val DEFAULT_REPLIES = listOf("Please text me.", "Can't talk now. Call you later.", "Who is this?")
@@ -47,6 +48,7 @@ class CallSettings(context: Context) {
             .putString("quickReplies", next.quickReplies.joinToString("\n"))
             .putBoolean("autoRecord", next.autoRecord)
             .putStringSet("recordExempt", next.recordExempt.map { it.toString() }.toSet())
+            .putBoolean("speakerWhenRecording", next.speakerWhenRecording)
             .apply()
         _state.value = next
     }
@@ -62,6 +64,7 @@ class CallSettings(context: Context) {
             ?.ifEmpty { null } ?: CallPrefs.DEFAULT_REPLIES,
         autoRecord = prefs.getBoolean("autoRecord", false),
         recordExempt = prefs.getStringSet("recordExempt", emptySet())!!.mapNotNull { it.toLongOrNull() }.toSet(),
+        speakerWhenRecording = prefs.getBoolean("speakerWhenRecording", false),
     )
 
     // Calls that were sent to voicemail, so the call history can label them.

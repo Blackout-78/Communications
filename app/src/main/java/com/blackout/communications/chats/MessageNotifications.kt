@@ -187,6 +187,19 @@ object MessageNotifications {
 
     fun cancel(context: Context, threadId: Long) = NotificationManagerCompat.from(context).cancel(threadId.toInt())
 
+    /**
+     * Clears a chat's notification after you've read it, unless it's showing as a bubble:
+     * Android closes a bubble when its notification is cleared.
+     */
+    fun cancelUnlessBubble(context: Context, threadId: Long) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            val active = context.getSystemService(NotificationManager::class.java).activeNotifications
+            val bubbled = active.any { it.id == threadId.toInt() && (it.notification.flags and android.app.Notification.FLAG_BUBBLE) != 0 }
+            if (bubbled) return
+        }
+        cancel(context, threadId)
+    }
+
     /** The contact's picture, or a colored circle with their first letter. */
     fun avatarBitmap(name: String, contact: ContactWithNumbers?): Bitmap {
         val size = 192

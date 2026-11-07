@@ -141,7 +141,7 @@ fun ConversationScreen(
     val incoming = messages.count { !it.outgoing }
     LaunchedEffect(threadId, incoming) {
         withContext(Dispatchers.IO) { MessageStore.markRead(context, threadId) }
-        MessageNotifications.cancel(context, threadId)
+        MessageNotifications.cancelUnlessBubble(context, threadId)
     }
 
     var text by rememberSaveable { mutableStateOf(initialText) }

@@ -206,7 +206,6 @@ fun SettingsScreen(
                     AppIcon.setThreeIcons(context, true, a.iconStyle, a.iconColor, a.iconColor2); three = true
                 }) { ThreeIconsPreview(48.dp) }
             }
-            }
             Text(
                 "The style and colors below apply to ${if (three) "all three icons" else "the icon"}. Home-screen shortcuts use your exact colors; the app drawer uses the closest of 357 ready-made designs.",
                 fontSize = 12.sp, color = AppColors.SubText, modifier = Modifier.padding(start = 16.dp, end = 16.dp, bottom = 10.dp),

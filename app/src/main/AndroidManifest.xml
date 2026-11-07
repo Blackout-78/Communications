@@ -5543,6 +5543,38 @@
             <intent-filter><action android:name="android.intent.action.MAIN" /><category android:name="android.intent.category.LAUNCHER" /></intent-filter>
         </activity-alias>
 
+        <!-- Home-screen icons for Contacts, Messages and Call Log point here, each with its own icon. -->
+        <activity
+            android:name=".OpenContactsActivity"
+            android:excludeFromRecents="true"
+            android:exported="true"
+            android:icon="@mipmap/ic_launcher_contacts_default"
+            android:label="Contacts"
+            android:noHistory="true"
+            android:roundIcon="@mipmap/ic_launcher_contacts_default"
+            android:taskAffinity=""
+            android:theme="@android:style/Theme.NoDisplay" />
+        <activity
+            android:name=".OpenMessagesActivity"
+            android:excludeFromRecents="true"
+            android:exported="true"
+            android:icon="@mipmap/ic_launcher_messages_default"
+            android:label="Messages"
+            android:noHistory="true"
+            android:roundIcon="@mipmap/ic_launcher_messages_default"
+            android:taskAffinity=""
+            android:theme="@android:style/Theme.NoDisplay" />
+        <activity
+            android:name=".OpenCallLogActivity"
+            android:excludeFromRecents="true"
+            android:exported="true"
+            android:icon="@mipmap/ic_launcher_calls_default"
+            android:label="Call Log"
+            android:noHistory="true"
+            android:roundIcon="@mipmap/ic_launcher_calls_default"
+            android:taskAffinity=""
+            android:theme="@android:style/Theme.NoDisplay" />
+
         <!-- The incoming call and in-call screens. -->
         <activity
             android:name=".calls.CallActivity"

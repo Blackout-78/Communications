@@ -107,8 +107,15 @@ object AppIcon {
 
     /** Adds a home-screen shortcut in your exact colors, or updates it if it's already there. */
     fun pinOrUpdateShortcut(context: Context, glyph: IconGlyph, style: IconStyle, main: Int, second: Int, ask: Boolean): Boolean {
-        val intent = Intent(context, MainActivity::class.java).setAction(if (glyph.tab == null) Intent.ACTION_MAIN else MainActivity.ACTION_OPEN_TAB)
-        glyph.tab?.let { intent.putExtra(MainActivity.EXTRA_TAB, it) }
+        // Each tab icon opens its own small entry screen (with its own icon), so launchers that
+        // redraw shortcuts from the screen they open keep the right picture.
+        val target = when (glyph) {
+            IconGlyph.Main -> MainActivity::class.java
+            IconGlyph.Contacts -> com.blackout.communications.OpenContactsActivity::class.java
+            IconGlyph.Messages -> com.blackout.communications.OpenMessagesActivity::class.java
+            IconGlyph.Calls -> com.blackout.communications.OpenCallLogActivity::class.java
+        }
+        val intent = Intent(context, target).setAction(Intent.ACTION_MAIN)
         val info = ShortcutInfoCompat.Builder(context, "icon_${glyph.key}")
             .setShortLabel(glyph.label)
             .setIcon(IconCompat.createWithAdaptiveBitmap(render(context, glyph, style, main, second)))

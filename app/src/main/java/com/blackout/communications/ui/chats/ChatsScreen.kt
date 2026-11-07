@@ -1,6 +1,8 @@
 package com.blackout.communications.ui.chats
 
+import android.os.Build
 import android.widget.Toast
+import com.blackout.communications.calls.Phone
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.ExperimentalFoundationApi
@@ -88,7 +90,12 @@ fun ChatsScreen(
         isDefault = Texting.isDefaultTextingApp(context)
         if (isDefault) permissions.launch(Texting.permissions())
     }
+    var notificationsOn by remember { mutableStateOf(true) }
+    val notifPermission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) {
+        notificationsOn = androidx.core.app.NotificationManagerCompat.from(context).areNotificationsEnabled()
+    }
     LifecycleResumeEffect(Unit) {
+        notificationsOn = androidx.core.app.NotificationManagerCompat.from(context).areNotificationsEnabled()
         isDefault = Texting.isDefaultTextingApp(context)
         vm.refresh()
         onPauseOrDispose { }
@@ -135,6 +142,24 @@ fun ChatsScreen(
                 permissions.launch(Texting.permissions())
             }
             else -> {
+                if (!notificationsOn) {
+                    SetupCard(
+                        "Turn on message notifications",
+                        "So new texts make a sound, buzz, and show in your notification bar and on your lock screen.",
+                        "Turn on",
+                    ) {
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU && !Phone.has(context, android.Manifest.permission.POST_NOTIFICATIONS)) {
+                            notifPermission.launch(android.Manifest.permission.POST_NOTIFICATIONS)
+                        } else {
+                            runCatching {
+                                context.startActivity(
+                                    android.content.Intent(android.provider.Settings.ACTION_APP_NOTIFICATION_SETTINGS)
+                                        .putExtra(android.provider.Settings.EXTRA_APP_PACKAGE, context.packageName),
+                                )
+                            }
+                        }
+                    }
+                }
                 // Filter chips: All, then your contact groups.
                 Row(Modifier.horizontalScroll(rememberScrollState()).padding(horizontal = 16.dp, vertical = 4.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     Chip("All", group == null) { vm.groupFilter.value = null }

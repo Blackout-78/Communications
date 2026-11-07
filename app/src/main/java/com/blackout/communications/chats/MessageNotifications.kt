@@ -34,13 +34,31 @@ import kotlinx.coroutines.launch
  * that float over other apps (Android 11 and newer).
  */
 object MessageNotifications {
-    private const val CHANNEL = "messages"
+    // Android keeps a channel's sound and vibration as first created, so changes need a new channel id.
+    private const val CHANNEL = "messages_v2"
+    private const val OLD_CHANNEL = "messages"
     const val EXTRA_THREAD = "thread_id"
     const val KEY_REPLY = "reply"
 
+    /** New texts: sound, vibration, pop-up banner, and full message on the lock screen. */
     private fun channel(context: Context) {
-        context.getSystemService(NotificationManager::class.java).createNotificationChannel(
+        val nm = context.getSystemService(NotificationManager::class.java)
+        nm.deleteNotificationChannel(OLD_CHANNEL)
+        nm.createNotificationChannel(
             NotificationChannel(CHANNEL, "Messages", NotificationManager.IMPORTANCE_HIGH).apply {
+                description = "New texts and picture messages"
+                setSound(
+                    android.provider.Settings.System.DEFAULT_NOTIFICATION_URI,
+                    android.media.AudioAttributes.Builder()
+                        .setUsage(android.media.AudioAttributes.USAGE_NOTIFICATION_COMMUNICATION_INSTANT)
+                        .setContentType(android.media.AudioAttributes.CONTENT_TYPE_SONIFICATION)
+                        .build(),
+                )
+                enableVibration(true)
+                vibrationPattern = longArrayOf(0, 250, 150, 250)
+                enableLights(true)
+                lockscreenVisibility = android.app.Notification.VISIBILITY_PUBLIC
+                setShowBadge(true)
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) setAllowBubbles(true)
             },
         )
@@ -113,6 +131,10 @@ object MessageNotifications {
             .addAction(reply)
             .addAction(markRead)
             .setColor(AppColors.Accent.toArgb())
+            .setVisibility(NotificationCompat.VISIBILITY_PUBLIC) // show sender and message on the lock screen
+            .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .setDefaults(NotificationCompat.DEFAULT_ALL) // sound and buzz on older Android versions
+            .setOnlyAlertOnce(false) // every new text makes a sound, even if the chat already had a notification
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
             val bubbleIntent = PendingIntent.getActivity(
@@ -196,7 +218,7 @@ class MessageActionReceiver : BroadcastReceiver() {
     }
 }
 
-/** Which conversation is on screen, so it doesn't notify. */
+/** Which conversation is on screen right now (app in front), so it doesn't notify. */
 object ChatsState {
     @Volatile var openThread: Long? = null
 }

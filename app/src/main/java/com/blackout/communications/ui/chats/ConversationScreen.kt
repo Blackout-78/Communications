@@ -123,9 +123,20 @@ fun ConversationScreen(
     val title = contact?.contact?.displayName?.ifBlank { null } ?: addresses.joinToString(", ").ifBlank { "Conversation" }
 
     // While this conversation is open: no notifications for it, and its messages are marked read.
-    DisposableEffect(threadId) {
-        ChatsState.openThread = threadId
-        onDispose { if (ChatsState.openThread == threadId) ChatsState.openThread = null }
+    val lifecycle = androidx.lifecycle.compose.LocalLifecycleOwner.current.lifecycle
+    DisposableEffect(threadId, lifecycle) {
+        val watcher = androidx.lifecycle.LifecycleEventObserver { _, event ->
+            when (event) {
+                androidx.lifecycle.Lifecycle.Event.ON_RESUME -> ChatsState.openThread = threadId
+                androidx.lifecycle.Lifecycle.Event.ON_PAUSE -> if (ChatsState.openThread == threadId) ChatsState.openThread = null
+                else -> {}
+            }
+        }
+        lifecycle.addObserver(watcher)
+        onDispose {
+            lifecycle.removeObserver(watcher)
+            if (ChatsState.openThread == threadId) ChatsState.openThread = null
+        }
     }
     val incoming = messages.count { !it.outgoing }
     LaunchedEffect(threadId, incoming) {

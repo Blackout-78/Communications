@@ -197,17 +197,15 @@ fun SettingsScreen(
             // One icon, or three icons (Contacts, Messages, Call Log).
             var three by remember { mutableStateOf(AppIcon.threeIcons(context)) }
             Text("Icons in the app drawer", fontSize = 15.sp, modifier = Modifier.padding(start = 16.dp, top = 14.dp))
-            Row(Modifier.fillMaxWidth().padding(12.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                Box(Modifier.weight(1f)) {
-                    IconModeCard("One icon", "Colors below apply", selected = !three, onClick = {
-                        AppIcon.setThreeIcons(context, false, a.iconStyle, a.iconColor, a.iconColor2); three = false
-                    }) { SingleIconPreview(44.dp) }
-                }
-                Box(Modifier.weight(1f)) {
-                    IconModeCard("Three icons", "Contacts, Messages, Call Log", selected = three, onClick = {
-                        AppIcon.setThreeIcons(context, true, a.iconStyle, a.iconColor, a.iconColor2); three = true
-                    }) { ThreeIconsPreview(26.dp) }
-                }
+            // Stacked, so each choice has the full width for its preview.
+            Column(Modifier.fillMaxWidth().padding(12.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                IconModeCard("One icon", "One Communications icon. The style and colors below apply to it.", selected = !three, onClick = {
+                    AppIcon.setThreeIcons(context, false, a.iconStyle, a.iconColor, a.iconColor2); three = false
+                }) { SingleIconPreview(56.dp) }
+                IconModeCard("Three icons", "Contacts, Messages and Call Log, each opening its own tab.", selected = three, onClick = {
+                    AppIcon.setThreeIcons(context, true, a.iconStyle, a.iconColor, a.iconColor2); three = true
+                }) { ThreeIconsPreview(48.dp) }
+            }
             }
             Text(
                 "The style and colors below apply to ${if (three) "all three icons" else "the icon"}. Home-screen shortcuts use your exact colors; the app drawer uses the closest of 357 ready-made designs.",
@@ -215,9 +213,9 @@ fun SettingsScreen(
             )
             Divider()
             // Live preview of your icon, as it will look on the home screen.
-            Row(Modifier.fillMaxWidth().padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
-                if (three) ThreeIconsPreview(48.dp) else SingleIconPreview(84.dp)
-                Column(Modifier.padding(start = 16.dp)) {
+            Column(Modifier.fillMaxWidth().padding(16.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+                if (three) ThreeIconsPreview(64.dp) else SingleIconPreview(84.dp)
+                Column(Modifier.padding(top = 12.dp), horizontalAlignment = Alignment.CenterHorizontally) {
                     Text("Style ${a.iconStyle.name} · ${a.iconStyle.label}", fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
                     Text(a.iconStyle.description, fontSize = 13.sp, color = AppColors.SubText)
                 }

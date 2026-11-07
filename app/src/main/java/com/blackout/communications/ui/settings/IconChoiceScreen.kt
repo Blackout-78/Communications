@@ -89,12 +89,12 @@ fun SingleIconPreview(size: Dp) {
 fun ThreeIconsPreview(size: Dp) {
     val context = LocalContext.current
     val a = ThemeState.appearance
-    Row(horizontalArrangement = Arrangement.spacedBy(14.dp)) {
+    Row(horizontalArrangement = Arrangement.spacedBy(20.dp)) {
         AppIcon.TAB_GLYPHS.forEach { g ->
             val img = remember(g, a.iconStyle, a.iconColor, a.iconColor2) { AppIcon.render(context, g, a.iconStyle, a.iconColor, a.iconColor2, 256).asImageBitmap() }
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 Image(img, g.label, modifier = Modifier.size(size).clip(CircleShape))
-                Text(g.label, fontSize = 12.sp, color = AppColors.SubText, modifier = Modifier.padding(top = 4.dp))
+                Text(g.label, fontSize = 12.sp, color = AppColors.SubText, maxLines = 1, softWrap = false, modifier = Modifier.padding(top = 4.dp))
             }
         }
     }

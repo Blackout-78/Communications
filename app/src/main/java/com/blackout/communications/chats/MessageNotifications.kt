@@ -64,8 +64,37 @@ object MessageNotifications {
         )
     }
 
-    /** Shows or updates the notification for a conversation's unread messages. */
+    /** Shows or updates the notification for a conversation. Never lets an error stop the alert. */
     suspend fun showFor(app: CommunicationsApp, threadId: Long) {
+        try {
+            showFull(app, threadId)
+        } catch (e: Exception) {
+            showSimple(app, threadId)
+        }
+    }
+
+    /** A plain notification with sound and buzz, used if the full one can't be built. */
+    private fun showSimple(app: CommunicationsApp, threadId: Long) {
+        runCatching {
+            channel(app)
+            val last = MessageStore.messages(app, threadId).lastOrNull { !it.outgoing }
+            val open = Intent(app, MainActivity::class.java).setAction(MainActivity.ACTION_OPEN_THREAD).putExtra(EXTRA_THREAD, threadId)
+            val n = NotificationCompat.Builder(app, CHANNEL)
+                .setSmallIcon(R.drawable.ic_stat_message)
+                .setContentTitle(last?.from ?: "New message")
+                .setContentText(last?.body?.ifBlank { "Photo" } ?: "")
+                .setCategory(NotificationCompat.CATEGORY_MESSAGE)
+                .setPriority(NotificationCompat.PRIORITY_HIGH)
+                .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
+                .setDefaults(NotificationCompat.DEFAULT_ALL)
+                .setAutoCancel(true)
+                .setContentIntent(PendingIntent.getActivity(app, threadId.toInt(), open, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE))
+                .build()
+            NotificationManagerCompat.from(app).notify(threadId.toInt(), n)
+        }
+    }
+
+    private suspend fun showFull(app: CommunicationsApp, threadId: Long) {
         if (app.chatPrefs.isMuted(threadId)) return
         if (ChatsState.openThread == threadId) return // You're looking at it.
         channel(app)

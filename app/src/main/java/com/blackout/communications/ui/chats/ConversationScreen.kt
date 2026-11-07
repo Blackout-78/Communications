@@ -39,6 +39,7 @@ import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.outlined.AttachFile
+import androidx.compose.material.icons.outlined.Download
 import androidx.compose.material.icons.outlined.Phone
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.DropdownMenu
@@ -154,6 +155,13 @@ fun ConversationScreen(
     var menu by remember { mutableStateOf(false) }
     var confirmDelete by remember { mutableStateOf(false) }
     var messageMenu by remember { mutableStateOf<ChatMessage?>(null) }
+    var viewing by remember { mutableStateOf<Uri?>(null) }
+    fun savePicture(uri: Uri) {
+        scope.launch {
+            val saved = com.blackout.communications.chats.SavePicture.save(context, uri)
+            Toast.makeText(context, if (saved != null) "Saved to Pictures/Communications" else "Couldn't save this picture", Toast.LENGTH_SHORT).show()
+        }
+    }
 
     val pickImages = rememberLauncherForActivityResult(ActivityResultContracts.PickMultipleVisualMedia(5)) { uris ->
         attachments.addAll(uris.take(5 - attachments.size))
@@ -221,6 +229,7 @@ fun ConversationScreen(
                         is Item.Day -> Text(item.label, color = AppColors.SubText, fontSize = 12.sp, modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp), textAlign = androidx.compose.ui.text.style.TextAlign.Center)
                         is Item.Msg -> MessageBubble(
                             item.m,
+                            onImageClick = { viewing = it },
                             modifier = Modifier.combinedClickable(
                                 onClick = {
                                     if (item.m.status == ChatMessage.Status.Failed && !item.m.isMms && address != null) {
@@ -307,6 +316,10 @@ fun ConversationScreen(
                         context.getSystemService(ClipboardManager::class.java).setPrimaryClip(ClipData.newPlainText("message", m.body))
                         messageMenu = null
                     }.padding(vertical = 12.dp))
+                    if (m.images.isNotEmpty()) Text(if (m.images.size > 1) "Save ${m.images.size} pictures" else "Save picture", fontSize = 16.sp, modifier = Modifier.fillMaxWidth().clickable {
+                        m.images.forEach { savePicture(it) }
+                        messageMenu = null
+                    }.padding(vertical = 12.dp))
                     Text("Delete", fontSize = 16.sp, color = AppColors.Missed, modifier = Modifier.fillMaxWidth().clickable {
                         Messenger.scope.launch { MessageStore.deleteMessage(context, m) }
                         messageMenu = null
@@ -315,6 +328,25 @@ fun ConversationScreen(
             },
             confirmButton = { TextButton(onClick = { messageMenu = null }) { Text("Close") } },
         )
+    }
+
+    viewing?.let { uri ->
+        androidx.compose.ui.window.Dialog(
+            onDismissRequest = { viewing = null },
+            properties = androidx.compose.ui.window.DialogProperties(usePlatformDefaultWidth = false),
+        ) {
+            Box(Modifier.fillMaxSize().background(Color.Black)) {
+                UriImage(uri, Modifier.fillMaxSize(), fit = true)
+                Row(Modifier.align(Alignment.TopStart).fillMaxWidth().padding(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                    IconButton(onClick = { viewing = null }) { Icon(Icons.Filled.Close, "Close", tint = Color.White) }
+                    Box(Modifier.weight(1f))
+                    TextButton(onClick = { savePicture(uri) }) {
+                        Icon(Icons.Outlined.Download, null, tint = Color.White)
+                        Text("Save", color = Color.White, modifier = Modifier.padding(start = 6.dp))
+                    }
+                }
+            }
+        }
     }
 
     if (confirmDelete) {
@@ -361,7 +393,7 @@ private fun dayLabel(time: Long): String {
 }
 
 @Composable
-private fun MessageBubble(m: ChatMessage, modifier: Modifier) {
+private fun MessageBubble(m: ChatMessage, onImageClick: (Uri) -> Unit, modifier: Modifier) {
     val mine = m.outgoing
     Row(Modifier.fillMaxWidth(), horizontalArrangement = if (mine) Arrangement.End else Arrangement.Start) {
         Column(
@@ -372,7 +404,9 @@ private fun MessageBubble(m: ChatMessage, modifier: Modifier) {
                 .padding(horizontal = if (m.images.isNotEmpty()) 6.dp else 14.dp, vertical = if (m.images.isNotEmpty()) 6.dp else 10.dp),
             verticalArrangement = Arrangement.spacedBy(6.dp),
         ) {
-            m.images.forEach { uri -> UriImage(uri, Modifier.widthIn(max = 260.dp).heightIn(max = 320.dp).clip(RoundedCornerShape(12.dp))) }
+            m.images.forEach { uri ->
+                UriImage(uri, Modifier.widthIn(max = 260.dp).heightIn(max = 320.dp).clip(RoundedCornerShape(12.dp)).clickable { onImageClick(uri) })
+            }
             if (m.body.isNotBlank()) {
                 val textColor = AppColors.onColor(if (mine) AppColors.MyBubble else AppColors.TheirBubble)
                 Text(linkify(m.body, textColor), color = textColor, fontSize = 15.sp, lineHeight = 21.sp, modifier = Modifier.padding(horizontal = if (m.images.isNotEmpty()) 8.dp else 0.dp))
@@ -400,20 +434,20 @@ private fun MessageBubble(m: ChatMessage, modifier: Modifier) {
 
 /** Shows a picture from a content address, shrunk to screen size. */
 @Composable
-fun UriImage(uri: Uri, modifier: Modifier) {
+fun UriImage(uri: Uri, modifier: Modifier, fit: Boolean = false) {
     val context = LocalContext.current
     val bitmap by produceState<ImageBitmap?>(null, uri) {
         value = withContext(Dispatchers.IO) {
             runCatching {
                 ImageDecoder.decodeBitmap(ImageDecoder.createSource(context.contentResolver, uri)) { d, info, _ ->
-                    val s = minOf(1f, 900f / maxOf(info.size.width, info.size.height))
+                    val s = minOf(1f, (if (fit) 2048f else 900f) / maxOf(info.size.width, info.size.height))
                     d.setTargetSize((info.size.width * s).toInt().coerceAtLeast(1), (info.size.height * s).toInt().coerceAtLeast(1))
                 }.asImageBitmap()
             }.getOrNull()
         }
     }
     val b = bitmap
-    if (b != null) Image(b, "Picture", contentScale = ContentScale.Crop, modifier = modifier)
+    if (b != null) Image(b, "Picture", contentScale = if (fit) ContentScale.Fit else ContentScale.Crop, modifier = modifier)
     else Box(modifier.size(160.dp).background(Color(0xFF2E2E33)))
 }
 

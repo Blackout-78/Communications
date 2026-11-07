@@ -67,7 +67,6 @@ import com.blackout.communications.ui.contacts.ContactsViewModel
 import com.blackout.communications.ui.contacts.EditContactScreen
 import com.blackout.communications.ui.contacts.ProfileScreen
 import com.blackout.communications.ui.settings.SettingsScreen
-import com.blackout.communications.ui.settings.IconChoiceScreen
 import com.blackout.communications.settings.AppIcon
 import com.blackout.communications.ui.theme.ThemeState
 import com.blackout.communications.data.StartTab
@@ -160,20 +159,6 @@ fun AppRoot(request: LaunchRequest?, onRequestHandled: () -> Unit) {
 
     val contactsList by contactsVm.listState.collectAsStateWithLifecycle()
     val contactsGroups = contactsList.groups
-
-    var askIcons by remember { mutableStateOf(!AppIcon.choiceMade(context)) }
-    if (askIcons) {
-        Surface(color = AppColors.Background, modifier = Modifier.fillMaxSize()) {
-            Box(Modifier.fillMaxSize().safeDrawingPadding()) {
-                IconChoiceScreen(onChoose = { three ->
-                    val a = ThemeState.appearance
-                    AppIcon.setThreeIcons(context, three, a.iconStyle, a.iconColor, a.iconColor2)
-                    askIcons = false
-                })
-            }
-        }
-        return
-    }
 
     val picture = ThemeState.appearance.pictureFor(tab.label)
     Surface(color = AppColors.Background, modifier = Modifier.fillMaxSize()) {

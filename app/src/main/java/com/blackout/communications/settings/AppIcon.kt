@@ -43,8 +43,8 @@ object AppIcon {
 
     fun prefs(context: Context) = context.getSharedPreferences("app_icon", Context.MODE_PRIVATE)
 
-    /** True when the user has chosen three icons (Contacts, Messages, Call Log). */
-    fun threeIcons(context: Context) = prefs(context).getBoolean("three", false)
+    /** Three-icon mode was removed; Communications always has one icon. */
+    fun threeIcons(context: Context) = false
 
     /** Has the first-run question (one icon or three) been answered? */
     fun choiceMade(context: Context) = prefs(context).getBoolean("choiceMade", false)
@@ -61,6 +61,11 @@ object AppIcon {
     fun applyAfterUpdate(context: Context, style: IconStyle, main: Int, second: Int) {
         val version = runCatching { context.packageManager.getPackageInfo(context.packageName, 0).longVersionCode }.getOrDefault(0L)
         if (prefs(context).getLong("appliedVersion", -1) == version) return
+        // Clean up after the removed three-icon option: back to one icon, and retire its home-screen shortcuts.
+        prefs(context).edit().putBoolean("three", false).apply()
+        runCatching {
+            ShortcutManagerCompat.disableShortcuts(context, TAB_GLYPHS.map { "icon_${it.key}" }, "This icon was removed. Use the Communications icon.")
+        }
         applyDrawerIcons(context, style, main, second)
         prefs(context).edit().putLong("appliedVersion", version).apply()
     }
@@ -107,15 +112,7 @@ object AppIcon {
 
     /** Adds a home-screen shortcut in your exact colors, or updates it if it's already there. */
     fun pinOrUpdateShortcut(context: Context, glyph: IconGlyph, style: IconStyle, main: Int, second: Int, ask: Boolean): Boolean {
-        // Each tab icon opens its own small entry screen (with its own icon), so launchers that
-        // redraw shortcuts from the screen they open keep the right picture.
-        val target = when (glyph) {
-            IconGlyph.Main -> MainActivity::class.java
-            IconGlyph.Contacts -> com.blackout.communications.OpenContactsActivity::class.java
-            IconGlyph.Messages -> com.blackout.communications.OpenMessagesActivity::class.java
-            IconGlyph.Calls -> com.blackout.communications.OpenCallLogActivity::class.java
-        }
-        val intent = Intent(context, target).setAction(Intent.ACTION_MAIN)
+        val intent = Intent(context, MainActivity::class.java).setAction(Intent.ACTION_MAIN)
         val info = ShortcutInfoCompat.Builder(context, "icon_${glyph.key}")
             .setShortLabel(glyph.label)
             .setIcon(IconCompat.createWithAdaptiveBitmap(render(context, glyph, style, main, second)))
@@ -131,7 +128,7 @@ object AppIcon {
 
     /** Updates every home-screen shortcut you've already added, after a style or color change. */
     fun updatePinnedShortcuts(context: Context, style: IconStyle, main: Int, second: Int) {
-        IconGlyph.entries.forEach { pinOrUpdateShortcut(context, it, style, main, second, ask = false) }
+        pinOrUpdateShortcut(context, IconGlyph.Main, style, main, second, ask = false)
     }
 
     /** Draws an icon at adaptive-icon size (the launcher crops it to its own shape). */

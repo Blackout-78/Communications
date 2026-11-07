@@ -25,6 +25,10 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.outlined.DeleteOutline
+import androidx.compose.material.icons.outlined.SelectAll
 import androidx.compose.material.icons.outlined.NotificationsOff
 import androidx.compose.material.icons.outlined.PushPin
 import androidx.compose.material3.AlertDialog
@@ -73,7 +77,11 @@ fun ChatsScreen(
     val ready by vm.ready.collectAsStateWithLifecycle()
     val group by vm.groupFilter.collectAsStateWithLifecycle()
     var isDefault by remember { mutableStateOf(Texting.isDefaultTextingApp(context)) }
-    var confirmDelete by remember { mutableStateOf<ThreadRow?>(null) }
+    // Multi-select: long-press a chat to start, tap to add or remove more.
+    var selected by remember { mutableStateOf(setOf<Long>()) }
+    val selecting = selected.isNotEmpty()
+    var confirmDelete by remember { mutableStateOf(false) }
+    androidx.activity.compose.BackHandler(enabled = selecting) { selected = emptySet() }
 
     val permissions = rememberLauncherForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { vm.refresh() }
     val role = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) {
@@ -87,9 +95,31 @@ fun ChatsScreen(
     }
 
     Column(Modifier.fillMaxSize()) {
-        Row(Modifier.fillMaxWidth().padding(start = 16.dp, end = 8.dp, top = 20.dp, bottom = 8.dp), verticalAlignment = Alignment.CenterVertically) {
-            Text("Chats", fontSize = 28.sp, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
-            IconButton(onClick = onNewMessage, enabled = ready) { Icon(Icons.Filled.Add, "New message", modifier = Modifier.size(26.dp)) }
+        if (selecting) {
+            val visible = rows.map { it.thread.id }
+            val allPinned = rows.filter { it.thread.id in selected }.all { it.pinned }
+            val allMuted = rows.filter { it.thread.id in selected }.all { it.muted }
+            Row(Modifier.fillMaxWidth().padding(start = 4.dp, end = 4.dp, top = 16.dp, bottom = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+                IconButton(onClick = { selected = emptySet() }) { Icon(Icons.Filled.Close, "Cancel selection") }
+                Text("${selected.size} selected", fontSize = 20.sp, fontWeight = FontWeight.SemiBold, modifier = Modifier.weight(1f))
+                IconButton(onClick = { selected = if (selected.containsAll(visible)) emptySet() else visible.toSet() }) {
+                    Icon(Icons.Outlined.SelectAll, if (selected.containsAll(visible)) "Unselect all" else "Select all")
+                }
+                IconButton(onClick = {
+                    rows.filter { it.thread.id in selected && it.pinned == allPinned }.forEach { vm.togglePin(it.thread.id) }
+                    selected = emptySet()
+                }) { Icon(Icons.Outlined.PushPin, if (allPinned) "Unpin" else "Pin") }
+                IconButton(onClick = {
+                    rows.filter { it.thread.id in selected && it.muted == allMuted }.forEach { vm.toggleMute(it.thread.id) }
+                    selected = emptySet()
+                }) { Icon(Icons.Outlined.NotificationsOff, if (allMuted) "Unmute" else "Mute") }
+                IconButton(onClick = { confirmDelete = true }) { Icon(Icons.Outlined.DeleteOutline, "Delete selected", tint = AppColors.Missed) }
+            }
+        } else {
+            Row(Modifier.fillMaxWidth().padding(start = 16.dp, end = 8.dp, top = 20.dp, bottom = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+                Text("Chats", fontSize = 28.sp, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
+                IconButton(onClick = onNewMessage, enabled = ready) { Icon(Icons.Filled.Add, "New message", modifier = Modifier.size(26.dp)) }
+            }
         }
 
         when {
@@ -117,15 +147,24 @@ fun ChatsScreen(
                 } else {
                     LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(horizontal = 16.dp, vertical = 4.dp)) {
                         items(rows, key = { it.thread.id }) { r ->
-                            var menu by remember { mutableStateOf(false) }
-                            Box {
-                                ThreadRowView(r, Modifier.combinedClickable(onClick = { onOpenThread(r.thread.id) }, onLongClick = { menu = true }))
-                                DropdownMenu(expanded = menu, onDismissRequest = { menu = false }) {
-                                    DropdownMenuItem(text = { Text(if (r.pinned) "Unpin" else "Pin to top") }, onClick = { menu = false; vm.togglePin(r.thread.id) })
-                                    DropdownMenuItem(text = { Text(if (r.muted) "Unmute" else "Mute") }, onClick = { menu = false; vm.toggleMute(r.thread.id) })
-                                    DropdownMenuItem(text = { Text("Delete conversation", color = AppColors.Missed) }, onClick = { menu = false; confirmDelete = r })
-                                }
-                            }
+                            val id = r.thread.id
+                            val isSelected = id in selected
+                            ThreadRowView(
+                                r,
+                                isSelected,
+                                Modifier
+                                    .background(if (isSelected) AppColors.Accent.copy(alpha = 0.16f) else Color.Transparent)
+                                    .combinedClickable(
+                                        onClick = {
+                                            if (selecting) {
+                                                selected = if (isSelected) selected - id else selected + id
+                                            } else {
+                                                onOpenThread(id)
+                                            }
+                                        },
+                                        onLongClick = { selected = if (isSelected) selected - id else selected + id },
+                                    ),
+                            )
                         }
                     }
                 }
@@ -133,13 +172,16 @@ fun ChatsScreen(
         }
     }
 
-    confirmDelete?.let { r ->
+    if (confirmDelete) {
+        val n = selected.size
         AlertDialog(
-            onDismissRequest = { confirmDelete = null },
-            title = { Text("Delete conversation with ${r.title}?") },
-            text = { Text("This deletes every message in it from this phone.") },
-            confirmButton = { TextButton(onClick = { vm.delete(r.thread.id); confirmDelete = null }) { Text("Delete", color = AppColors.Missed) } },
-            dismissButton = { TextButton(onClick = { confirmDelete = null }) { Text("Cancel") } },
+            onDismissRequest = { confirmDelete = false },
+            title = { Text(if (n == 1) "Delete 1 conversation?" else "Delete $n conversations?") },
+            text = { Text("This deletes every message in ${if (n == 1) "it" else "them"} from this phone. It can't be undone.") },
+            confirmButton = {
+                TextButton(onClick = { vm.deleteMany(selected); selected = emptySet(); confirmDelete = false }) { Text("Delete", color = AppColors.Missed) }
+            },
+            dismissButton = { TextButton(onClick = { confirmDelete = false }) { Text("Cancel") } },
         )
     }
 }
@@ -156,10 +198,18 @@ private fun Chip(label: String, selected: Boolean, onClick: () -> Unit) {
 }
 
 @Composable
-private fun ThreadRowView(r: ThreadRow, modifier: Modifier) {
+private fun ThreadRowView(r: ThreadRow, isSelected: Boolean, modifier: Modifier) {
     Column(modifier) {
         Row(Modifier.fillMaxWidth().padding(vertical = 12.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            Avatar(r.title, r.contact?.contact?.photoPath, 52.dp)
+            Box {
+                Avatar(r.title, r.contact?.contact?.photoPath, 52.dp)
+                if (isSelected) {
+                    Box(
+                        Modifier.align(Alignment.BottomEnd).size(22.dp).clip(androidx.compose.foundation.shape.CircleShape).background(AppColors.Accent),
+                        contentAlignment = Alignment.Center,
+                    ) { Icon(Icons.Filled.Check, "Selected", tint = Color.White, modifier = Modifier.size(14.dp)) }
+                }
+            }
             Column(Modifier.weight(1f)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(r.title, fontSize = 16.sp, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f))

@@ -135,6 +135,15 @@ class ChatsViewModel(application: Application) : AndroidViewModel(application) {
     fun togglePin(id: Long) = app.chatPrefs.togglePin(id)
     fun toggleMute(id: Long) = app.chatPrefs.toggleMute(id)
 
+    /** Deletes several conversations at once. */
+    fun deleteMany(ids: Collection<Long>) = viewModelScope.launch(Dispatchers.IO) {
+        ids.forEach { id ->
+            MessageStore.deleteThread(getApplication(), id)
+            app.chatPrefs.forget(id)
+        }
+        refresh()
+    }
+
     fun delete(id: Long) = viewModelScope.launch(Dispatchers.IO) {
         MessageStore.deleteThread(getApplication(), id)
         app.chatPrefs.forget(id)

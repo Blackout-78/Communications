@@ -168,11 +168,12 @@ object MessageStore {
 
     // ---------------------------------------------------------------- Writing
 
-    fun saveIncomingSms(context: Context, address: String, body: String, sentAt: Long, subId: Int): Uri? {
+    /** Saves a received text. Returns its row, or null if the phone's message storage refused it. */
+    fun saveIncomingSms(context: Context, address: String, body: String, sentAt: Long, subId: Int, receivedAt: Long = System.currentTimeMillis()): Uri? = runCatching {
         val values = ContentValues().apply {
             put(Telephony.Sms.ADDRESS, address)
             put(Telephony.Sms.BODY, body)
-            put(Telephony.Sms.DATE, System.currentTimeMillis())
+            put(Telephony.Sms.DATE, receivedAt)
             put(Telephony.Sms.DATE_SENT, sentAt)
             put(Telephony.Sms.READ, 0)
             put(Telephony.Sms.SEEN, 0)
@@ -180,8 +181,8 @@ object MessageStore {
             put(Telephony.Sms.SUBSCRIPTION_ID, subId)
             put(Telephony.Sms.THREAD_ID, threadId(context, address))
         }
-        return runCatching { context.contentResolver.insert(Telephony.Sms.Inbox.CONTENT_URI, values) }.getOrNull()
-    }
+        context.contentResolver.insert(Telephony.Sms.Inbox.CONTENT_URI, values)
+    }.getOrNull()
 
     fun saveOutgoingSms(context: Context, address: String, body: String, threadId: Long): Uri? {
         val values = ContentValues().apply {

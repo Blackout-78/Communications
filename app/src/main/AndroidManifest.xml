@@ -127,6 +127,7 @@
             </intent-filter>
         </receiver>
         <receiver android:name=".chats.MmsDownloadedReceiver" android:exported="false" />
+        <receiver android:name=".chats.MmsRetryReceiver" android:exported="false" />
         <receiver android:name=".chats.MmsSentReceiver" android:exported="false" />
         <receiver android:name=".chats.SmsStatusReceiver" android:exported="false" />
         <receiver android:name=".chats.MessageActionReceiver" android:exported="false" />

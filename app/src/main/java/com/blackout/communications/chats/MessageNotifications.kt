@@ -64,46 +64,78 @@ object MessageNotifications {
         )
     }
 
-    /** Shows or updates the notification for a conversation. Never lets an error stop the alert. */
-    suspend fun showFor(app: CommunicationsApp, threadId: Long) {
-        try {
-            showFull(app, threadId)
+    /**
+     * Alerts you to a new message. Uses the full notification (reply, bubble) when it can be built,
+     * and otherwise a plain one built from the message itself, so a new message never arrives silently.
+     * Muted and on-screen conversations are skipped on purpose.
+     */
+    suspend fun showFor(app: CommunicationsApp, threadId: Long?, address: String, body: String) {
+        val handled = try {
+            threadId != null && showFull(app, threadId)
         } catch (e: Exception) {
-            showSimple(app, threadId)
+            false
         }
+        if (!handled) showSimple(app, threadId, address, body)
     }
 
     /** A plain notification with sound and buzz, used if the full one can't be built. */
-    private fun showSimple(app: CommunicationsApp, threadId: Long) {
+    private suspend fun showSimple(app: CommunicationsApp, threadId: Long?, address: String, body: String) {
         runCatching {
             channel(app)
-            val last = MessageStore.messages(app, threadId).lastOrNull { !it.outgoing }
-            val open = Intent(app, MainActivity::class.java).setAction(MainActivity.ACTION_OPEN_THREAD).putExtra(EXTRA_THREAD, threadId)
+            val title = runCatching { app.contacts.findByNumber(address)?.contact?.displayName }.getOrNull()?.ifBlank { null } ?: address
+            val open = if (threadId != null) {
+                Intent(app, MainActivity::class.java).setAction(MainActivity.ACTION_OPEN_THREAD).putExtra(EXTRA_THREAD, threadId)
+            } else {
+                Intent(app, MainActivity::class.java)
+            }
+            val id = threadId?.toInt() ?: address.hashCode()
             val n = NotificationCompat.Builder(app, CHANNEL)
                 .setSmallIcon(R.drawable.ic_stat_message)
-                .setContentTitle(last?.from ?: "New message")
-                .setContentText(last?.body?.ifBlank { "Photo" } ?: "")
+                .setContentTitle(title)
+                .setContentText(body.ifBlank { "Photo" })
+                .setStyle(NotificationCompat.BigTextStyle().bigText(body.ifBlank { "Photo" }))
                 .setCategory(NotificationCompat.CATEGORY_MESSAGE)
                 .setPriority(NotificationCompat.PRIORITY_HIGH)
                 .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
                 .setDefaults(NotificationCompat.DEFAULT_ALL)
                 .setAutoCancel(true)
-                .setContentIntent(PendingIntent.getActivity(app, threadId.toInt(), open, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE))
+                .setContentIntent(PendingIntent.getActivity(app, id, open, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE))
                 .build()
-            NotificationManagerCompat.from(app).notify(threadId.toInt(), n)
+            NotificationManagerCompat.from(app).notify(id, n)
         }
     }
 
-    private suspend fun showFull(app: CommunicationsApp, threadId: Long) {
-        if (app.chatPrefs.isMuted(threadId)) return
-        if (ChatsState.openThread == threadId) return // You're looking at it.
+    /** A notification about a problem with an incoming message (for example, a picture message that didn't download). */
+    fun alert(context: Context, id: Int, title: String, text: String) {
+        runCatching {
+            channel(context)
+            val open = Intent(context, MainActivity::class.java).setAction(MainActivity.ACTION_OPEN_TAB).putExtra(MainActivity.EXTRA_TAB, "Chats")
+            val n = NotificationCompat.Builder(context, CHANNEL)
+                .setSmallIcon(R.drawable.ic_stat_message)
+                .setContentTitle(title)
+                .setContentText(text)
+                .setStyle(NotificationCompat.BigTextStyle().bigText(text))
+                .setCategory(NotificationCompat.CATEGORY_MESSAGE)
+                .setPriority(NotificationCompat.PRIORITY_HIGH)
+                .setDefaults(NotificationCompat.DEFAULT_ALL)
+                .setAutoCancel(true)
+                .setContentIntent(PendingIntent.getActivity(context, id, open, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE))
+                .build()
+            NotificationManagerCompat.from(context).notify(id, n)
+        }
+    }
+
+    /** True if the notification was shown or skipped on purpose; false if it couldn't be built. */
+    private suspend fun showFull(app: CommunicationsApp, threadId: Long): Boolean {
+        if (app.chatPrefs.isMuted(threadId)) return true
+        if (ChatsState.openThread == threadId) return true // You're looking at it.
         channel(app)
-        val thread = MessageStore.threads(app).firstOrNull { it.id == threadId } ?: return
-        val address = thread.addresses.firstOrNull() ?: return
+        val thread = MessageStore.threads(app).firstOrNull { it.id == threadId } ?: return false
+        val address = thread.addresses.firstOrNull() ?: return false
         val contact = app.contacts.findByNumber(address)
         val title = contact?.contact?.displayName?.ifBlank { null } ?: address
         val unread = MessageStore.messages(app, threadId).filter { !it.outgoing }.takeLast(maxOf(thread.unread, 1)).takeLast(6)
-        if (unread.isEmpty()) return
+        if (unread.isEmpty()) return false
 
         val icon = IconCompat.createWithBitmap(avatarBitmap(title, contact))
         val sender = Person.Builder().setName(title).setKey(address).setIcon(icon).setImportant(contact != null).build()
@@ -183,6 +215,7 @@ object MessageNotifications {
         } catch (e: SecurityException) {
             // Notifications not allowed.
         }
+        return true
     }
 
     fun cancel(context: Context, threadId: Long) = NotificationManagerCompat.from(context).cancel(threadId.toInt())

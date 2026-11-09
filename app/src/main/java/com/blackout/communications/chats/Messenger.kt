@@ -30,6 +30,13 @@ object Messenger {
     fun smsManager(context: Context): SmsManager =
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) context.getSystemService(SmsManager::class.java) else SmsManager.getDefault()
 
+    /** Lets the phone's own MMS service read and write our picture-message files. */
+    fun grantMms(context: Context, uri: Uri) {
+        for (pkg in listOf("com.android.phone", "com.android.mms.service")) {
+            runCatching { context.grantUriPermission(pkg, uri, Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION) }
+        }
+    }
+
     fun sendText(context: Context, address: String, body: String, threadId: Long? = null) {
         val app = context.applicationContext
         scope.launch {
@@ -89,6 +96,7 @@ object Messenger {
             val row = MessageStore.saveMms(app, Telephony.Mms.MESSAGE_BOX_OUTBOX, thread, address, System.currentTimeMillis() / 1000, parts, tid)
             val file = MmsFileProvider.newFile(app)
             file.writeBytes(Pdu.sendRequest(address, tid, parts))
+            grantMms(app, MmsFileProvider.uriFor(app, file))
             val sentIntent = PendingIntent.getBroadcast(
                 app, (row?.lastPathSegment?.toIntOrNull() ?: 0) + 100_000,
                 Intent(app, MmsSentReceiver::class.java).setData(row).putExtra("file", file.name),
@@ -168,17 +176,23 @@ class MmsSentReceiver : BroadcastReceiver() {
 class SmsDeliverReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
         if (intent.action != Telephony.Sms.Intents.SMS_DELIVER_ACTION) return
-        val messages = Telephony.Sms.Intents.getMessagesFromIntent(intent) ?: return
-        if (messages.isEmpty()) return
-        val address = messages[0].displayOriginatingAddress ?: messages[0].originatingAddress ?: return
+        val messages = Telephony.Sms.Intents.getMessagesFromIntent(intent)
+        if (messages.isNullOrEmpty()) return
+        val address = messages[0].displayOriginatingAddress ?: messages[0].originatingAddress ?: "Unknown"
         val body = messages.joinToString("") { it.displayMessageBody ?: it.messageBody ?: "" }
         val sentAt = messages[0].timestampMillis
         val subId = intent.getIntExtra("subscription", -1)
+        val app = context.applicationContext as CommunicationsApp
         val pending = goAsync()
         Messenger.scope.launch {
             try {
-                MessageStore.saveIncomingSms(context, address, body, sentAt, subId)
-                MessageNotifications.showFor(context.applicationContext as CommunicationsApp, MessageStore.threadId(context, address))
+                runCatching { PendingTexts.flush(app) } // older texts that were waiting go in first
+                val saved = MessageStore.saveIncomingSms(app, address, body, sentAt, subId)
+                // Never lose a text: if it can't be saved now, keep it until it can.
+                if (saved == null) runCatching { PendingTexts.add(app, address, body, sentAt, subId) }
+                RxLog.mark(app, RxLog.SMS)
+                val thread = runCatching { MessageStore.threadId(app, address) }.getOrNull()
+                MessageNotifications.showFor(app, thread, address, body)
             } finally {
                 pending.finish()
             }
@@ -191,40 +205,57 @@ class MmsWapPushReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
         if (intent.action != Telephony.Sms.Intents.WAP_PUSH_DELIVER_ACTION) return
         val data = intent.getByteArrayExtra("data") ?: return
-        val notice = Pdu.parse(data) ?: return
-        if (notice.type != Pdu.TYPE_NOTIFICATION_IND) return
-        val location = notice.contentLocation ?: return
-        val file = MmsFileProvider.newFile(context)
-        val done = PendingIntent.getBroadcast(
-            context, location.hashCode(),
-            Intent(context, MmsDownloadedReceiver::class.java).putExtra("file", file.name).putExtra("from", notice.from),
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_MUTABLE,
-        )
-        runCatching {
-            Messenger.smsManager(context).downloadMultimediaMessage(context, location, MmsFileProvider.uriFor(context, file), null, done)
+        val notice = Pdu.parse(data)
+        if (notice != null && notice.type != Pdu.TYPE_NOTIFICATION_IND) return // delivery and read reports
+        val location = notice?.contentLocation ?: Pdu.findLocation(data)
+        if (location == null) {
+            MessageNotifications.alert(context, data.contentHashCode(), "Picture message", "A picture message arrived but couldn't be read.")
+            return
         }
+        RxLog.mark(context, RxLog.MMS_NOTICE)
+        MmsInbox.onNotice(context, location, notice?.from)
     }
 }
 
-/** Saves a downloaded picture message and shows a notification. */
+/** Saves a downloaded picture message and shows a notification. A failed download is retried by MmsInbox. */
 class MmsDownloadedReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
         val file = File(MmsFileProvider.dir(context), intent.getStringExtra("file") ?: return)
         if (resultCode != Activity.RESULT_OK || !file.exists()) { file.delete(); return }
+        val location = intent.getStringExtra("location")
+        val noticeFrom = intent.getStringExtra("from")?.takeIf { it.isNotBlank() }
+        val app = context.applicationContext as CommunicationsApp
         val pending = goAsync()
         Messenger.scope.launch {
+            var from = noticeFrom ?: "Unknown"
             try {
-                val msg = Pdu.parse(file.readBytes())
+                val bytes = file.readBytes()
                 file.delete()
-                if (msg != null) {
-                    val from = msg.from ?: intent.getStringExtra("from") ?: return@launch
-                    val thread = MessageStore.threadId(context, from)
-                    MessageStore.saveMms(
-                        context, Telephony.Mms.MESSAGE_BOX_INBOX, thread, from,
-                        msg.dateSec ?: (System.currentTimeMillis() / 1000), msg.parts.filter { it.isText || it.isImage }, msg.transactionId,
-                    )
-                    MessageNotifications.showFor(context.applicationContext as CommunicationsApp, thread)
+                // A second copy of the same message (carrier resent the notice) is dropped.
+                if (location != null && !MmsInbox.done(app, location)) return@launch
+                val msg = Pdu.parse(bytes)
+                from = msg?.from?.takeIf { it.isNotBlank() } ?: from
+                val all = msg?.parts.orEmpty()
+                val shown = all.filter { it.isText || it.isImage }
+                val hidden = all.count { !it.isText && !it.isImage && !it.contentType.startsWith("application/smil") }
+                // Something this app can't show still leaves a visible line, never an empty message.
+                val note = when {
+                    msg == null -> "[Picture message couldn't be read]"
+                    hidden > 0 -> "[$hidden attachment(s) this app can't show]"
+                    shown.isEmpty() -> "[Empty picture message]"
+                    else -> null
                 }
+                val parts = shown + listOfNotNull(note?.let { Pdu.Part("text/plain", it.toByteArray(Charsets.UTF_8)) })
+                val thread = MessageStore.threadId(app, from)
+                MessageStore.saveMms(
+                    app, Telephony.Mms.MESSAGE_BOX_INBOX, thread, from,
+                    msg?.dateSec ?: (System.currentTimeMillis() / 1000), parts, msg?.transactionId,
+                )
+                RxLog.mark(app, RxLog.MMS_SAVED)
+                val text = parts.firstOrNull { it.isText }?.text() ?: "Picture message"
+                MessageNotifications.showFor(app, thread, from, text)
+            } catch (e: Exception) {
+                MessageNotifications.alert(app, from.hashCode(), "Picture message", "A picture message from $from arrived but couldn't be saved.")
             } finally {
                 pending.finish()
             }

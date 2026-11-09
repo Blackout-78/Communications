@@ -97,6 +97,7 @@ fun SettingsScreen(
     var themeDialog by remember { mutableStateOf(false) }
     var sizeDialog by remember { mutableStateOf(false) }
     var startDialog by remember { mutableStateOf(false) }
+    var checkDialog by remember { mutableStateOf(false) }
     var editTab by remember { mutableStateOf("Contacts") }
     var pickSlot by remember { mutableStateOf<ColorSlot?>(null) }
     var pickIcon by remember { mutableStateOf(0) } // 1 = main color, 2 = second color
@@ -275,6 +276,8 @@ fun SettingsScreen(
                 }
                 runCatching { context.startActivity(intent) }
             }
+            Divider()
+            Row1("Message check", null, "Is everything set so texts reach you?") { checkDialog = true }
         }
 
         // ------------------------------------------------ 6. Blocked numbers
@@ -321,6 +324,7 @@ fun SettingsScreen(
     }
 
     // ------------------------------------------------ Dialogs
+    if (checkDialog) MessageCheckDialog { checkDialog = false }
     if (themeDialog) ChoiceDialog("Theme", ThemeMode.entries.map { it.label }, a.theme.ordinal, { themeDialog = false }) { i ->
         update { it.copy(theme = ThemeMode.entries[i]) }; themeDialog = false
     }

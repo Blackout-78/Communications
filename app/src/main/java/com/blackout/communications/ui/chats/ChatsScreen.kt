@@ -53,6 +53,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import com.blackout.communications.chats.MmsInbox
+import com.blackout.communications.chats.Messenger
+import com.blackout.communications.chats.PendingTexts
+import kotlinx.coroutines.launch
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -98,6 +102,12 @@ fun ChatsScreen(
         notificationsOn = androidx.core.app.NotificationManagerCompat.from(context).areNotificationsEnabled()
         isDefault = Texting.isDefaultTextingApp(context)
         vm.refresh()
+        // Opening Chats saves any text that was waiting and retries any picture message that didn't download.
+        val appContext = context.applicationContext
+        Messenger.scope.launch {
+            runCatching { PendingTexts.flush(appContext) }
+            runCatching { MmsInbox.retryAll(appContext) }
+        }
         onPauseOrDispose { }
     }
 

@@ -44,6 +44,10 @@ object Pdu {
 
     fun parse(data: ByteArray): Message? = runCatching { Reader(data).message() }.getOrNull()
 
+    /** Last-resort way to find the download address in a notice that couldn't be read normally. */
+    fun findLocation(data: ByteArray): String? =
+        Regex("https?://[\\x21-\\x7E]+").find(String(data, Charsets.ISO_8859_1))?.value
+
     private class Reader(val d: ByteArray) {
         var p = 0
 
@@ -58,32 +62,37 @@ object Pdu {
             var date: Long? = null
             var subject: String? = null
             var parts = emptyList<Part>()
-            while (p < d.size) {
-                val field = u(p)
-                if (field and 0x80 == 0) {
-                    // An unknown text-named header: skip its name and value.
-                    textString(); skipValue(); continue
-                }
-                p++
-                when (field) {
-                    H_MESSAGE_TYPE -> type = u(p++)
-                    H_TRANSACTION_ID -> tid = textString()
-                    H_CONTENT_LOCATION -> location = textString()
-                    H_FROM -> from = fromValue()
-                    H_TO -> to += cleanAddress(encodedString())
-                    H_DATE -> date = longInteger()
-                    H_SUBJECT -> subject = encodedString()
-                    H_CONTENT_TYPE -> {
-                        val ct = contentType()
-                        if (type == TYPE_RETRIEVE_CONF && ct.first.startsWith("application/vnd.wap.multipart")) {
-                            parts = multipart()
-                        } else if (type == TYPE_RETRIEVE_CONF) {
-                            parts = listOf(Part(ct.first, d.copyOfRange(p, d.size), ct.second))
-                        }
-                        p = d.size
+            // A message with an odd header is kept with whatever was read before it, not thrown away.
+            try {
+                while (p < d.size) {
+                    val field = u(p)
+                    if (field and 0x80 == 0) {
+                        // An unknown text-named header: skip its name and value.
+                        textString(); skipValue(); continue
                     }
-                    else -> skipValue()
+                    p++
+                    when (field) {
+                        H_MESSAGE_TYPE -> type = u(p++)
+                        H_TRANSACTION_ID -> tid = textString()
+                        H_CONTENT_LOCATION -> location = textString()
+                        H_FROM -> from = fromValue()
+                        H_TO -> to += cleanAddress(encodedString())
+                        H_DATE -> date = longInteger()
+                        H_SUBJECT -> subject = encodedString()
+                        H_CONTENT_TYPE -> {
+                            val ct = contentType()
+                            if (type == TYPE_RETRIEVE_CONF && ct.first.startsWith("application/vnd.wap.multipart")) {
+                                parts = multipart()
+                            } else if (type == TYPE_RETRIEVE_CONF) {
+                                parts = listOf(Part(ct.first, d.copyOfRange(p, d.size), ct.second))
+                            }
+                            p = d.size
+                        }
+                        else -> skipValue()
+                    }
                 }
+            } catch (e: RuntimeException) {
+                if (type != TYPE_RETRIEVE_CONF && type != TYPE_NOTIFICATION_IND) throw e
             }
             return Message(type, tid, location, from?.let { cleanAddress(it) }, to, date, subject, parts)
         }
@@ -181,23 +190,27 @@ object Pdu {
         }
 
         fun multipart(): List<Part> {
-            val count = uintvar().toInt()
-            val parts = ArrayList<Part>(count)
-            repeat(count) {
-                val headersLen = uintvar().toInt()
-                val dataLen = uintvar().toInt()
-                val headersEnd = p + headersLen
-                val (ct, charset) = contentType()
-                var name: String? = null
-                while (p < headersEnd) {
-                    val h = u(p)
-                    if (h == 0x8E) { p++; name = textString() } // Content-Location
-                    else if (h >= 0x80) { p++; skipValue() }
-                    else { textString(); skipValue() }
+            val parts = ArrayList<Part>()
+            try {
+                val count = uintvar().toInt()
+                repeat(count) {
+                    val headersLen = uintvar().toInt()
+                    val dataLen = uintvar().toInt()
+                    val headersEnd = p + headersLen
+                    val (ct, charset) = contentType()
+                    var name: String? = null
+                    while (p < headersEnd) {
+                        val h = u(p)
+                        if (h == 0x8E) { p++; name = textString() } // Content-Location
+                        else if (h >= 0x80) { p++; skipValue() }
+                        else { textString(); skipValue() }
+                    }
+                    p = headersEnd
+                    parts += Part(ct, d.copyOfRange(p, p + dataLen), charset, name)
+                    p += dataLen
                 }
-                p = headersEnd
-                parts += Part(ct, d.copyOfRange(p, p + dataLen), charset, name)
-                p += dataLen
+            } catch (e: RuntimeException) {
+                // A damaged part ends the list; the parts before it are still shown.
             }
             return parts
         }

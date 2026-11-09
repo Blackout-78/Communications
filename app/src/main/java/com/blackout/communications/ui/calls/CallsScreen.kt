@@ -227,7 +227,20 @@ private fun CallRow(
 ) {
     val context = LocalContext.current
     var menu by remember { mutableStateOf(false) }
+    var confirmBlock by remember { mutableStateOf(false) }
     val name = e.contact?.title ?: e.number.ifBlank { "Private number" }.let { if (it == e.number) formatNumber(it) else it }
+    if (confirmBlock) {
+        com.blackout.communications.ui.components.BlockConfirmDialog(
+            who = name,
+            isContact = e.contact != null,
+            onConfirm = {
+                confirmBlock = false
+                val ok = BlockedNumbers.block(context, e.number, "call history")
+                Toast.makeText(context, if (ok) "Blocked" else "Make Communications your phone app to block numbers", Toast.LENGTH_SHORT).show()
+            },
+            onDismiss = { confirmBlock = false },
+        )
+    }
     val color = typeColor(e.type)
     val time = SimpleDateFormat("h:mm a", Locale.getDefault()).format(Date(e.date))
     val duration = if (e.durationSec > 0 && e.type != CallType.Missed) " • ${formatDuration(e.durationSec)}" else ""
@@ -262,11 +275,7 @@ private fun CallRow(
                     if (e.number.isNotBlank()) {
                         DropdownMenuItem(text = { Text("Message") }, onClick = { menu = false; onMessage(e.number) })
                         if (e.contact == null) DropdownMenuItem(text = { Text("Add to contacts") }, onClick = { menu = false; onAddToContacts(e.number) })
-                        DropdownMenuItem(text = { Text("Block") }, onClick = {
-                            menu = false
-                            val ok = BlockedNumbers.block(context, e.number)
-                            Toast.makeText(context, if (ok) "Blocked" else "Make Communications your phone app to block numbers", Toast.LENGTH_SHORT).show()
-                        })
+                        DropdownMenuItem(text = { Text("Block") }, onClick = { menu = false; confirmBlock = true })
                     }
                     DropdownMenuItem(text = { Text("Delete from history") }, onClick = { menu = false; onDelete(e.id) })
                 }

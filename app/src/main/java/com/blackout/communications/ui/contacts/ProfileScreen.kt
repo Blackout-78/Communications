@@ -91,6 +91,7 @@ fun ProfileScreen(
 
     var menu by remember { mutableStateOf(false) }
     var confirmDelete by remember { mutableStateOf(false) }
+    var confirmBlock by remember { mutableStateOf(false) }
     var ringtoneDialog by remember { mutableStateOf(false) }
     var speedDialDialog by remember { mutableStateOf(false) }
     // Changes when blocking changes, so the Block row redraws.
@@ -205,13 +206,30 @@ fun ProfileScreen(
                     if (!BlockedNumbers.canUse(context)) {
                         Toast.makeText(context, "Make Communications your phone app (Calls tab) to block numbers", Toast.LENGTH_LONG).show()
                     } else {
-                        c.numbers.forEach { n -> if (blocked) BlockedNumbers.unblock(context, n.number) else BlockedNumbers.block(context, n.number) }
-                        blockVersion++
+                        if (blocked) {
+                            c.numbers.forEach { n -> BlockedNumbers.unblock(context, n.number) }
+                            blockVersion++
+                        } else {
+                            confirmBlock = true
+                        }
                     }
                 }
             }
             Spacer(Modifier.height(24.dp))
         }
+    }
+
+    if (confirmBlock) {
+        com.blackout.communications.ui.components.BlockConfirmDialog(
+            who = c.title,
+            isContact = true,
+            onConfirm = {
+                confirmBlock = false
+                c.numbers.forEach { n -> BlockedNumbers.block(context, n.number, "contact profile") }
+                blockVersion++
+            },
+            onDismiss = { confirmBlock = false },
+        )
     }
 
     if (confirmDelete) {

@@ -154,6 +154,7 @@ fun ConversationScreen(
     val attachments = remember { mutableStateListOf<Uri>() }
     var menu by remember { mutableStateOf(false) }
     var confirmDelete by remember { mutableStateOf(false) }
+    var confirmBlock by remember { mutableStateOf(false) }
     var messageMenu by remember { mutableStateOf<ChatMessage?>(null) }
     var viewing by remember { mutableStateOf<Uri?>(null) }
     fun savePicture(uri: Uri) {
@@ -205,11 +206,7 @@ fun ConversationScreen(
                         }
                         DropdownMenuItem(text = { Text(if (threadId in flags.pinned) "Unpin" else "Pin to top") }, onClick = { menu = false; app.chatPrefs.togglePin(threadId) })
                         DropdownMenuItem(text = { Text(if (threadId in flags.muted) "Unmute" else "Mute") }, onClick = { menu = false; app.chatPrefs.toggleMute(threadId) })
-                        if (address != null) DropdownMenuItem(text = { Text("Block") }, onClick = {
-                            menu = false
-                            val ok = BlockedNumbers.block(context, address)
-                            Toast.makeText(context, if (ok) "Blocked. Their calls and texts will be stopped." else "Couldn't block this number", Toast.LENGTH_SHORT).show()
-                        })
+                        if (address != null) DropdownMenuItem(text = { Text("Block") }, onClick = { menu = false; confirmBlock = true })
                         DropdownMenuItem(text = { Text("Delete conversation", color = AppColors.Missed) }, onClick = { menu = false; confirmDelete = true })
                     }
                 }
@@ -349,6 +346,18 @@ fun ConversationScreen(
         }
     }
 
+    if (confirmBlock && address != null) {
+        com.blackout.communications.ui.components.BlockConfirmDialog(
+            who = title,
+            isContact = contact != null,
+            onConfirm = {
+                confirmBlock = false
+                val ok = BlockedNumbers.block(context, address, "chat menu")
+                Toast.makeText(context, if (ok) "Blocked. Their calls and texts will be stopped." else "Couldn't block this number", Toast.LENGTH_SHORT).show()
+            },
+            onDismiss = { confirmBlock = false },
+        )
+    }
     if (confirmDelete) {
         AlertDialog(
             onDismissRequest = { confirmDelete = false },

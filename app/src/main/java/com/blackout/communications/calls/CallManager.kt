@@ -57,7 +57,10 @@ object CallManager {
     var onChanged: (() -> Unit)? = null
 
     private val callback = object : Call.Callback() {
-        override fun onStateChanged(call: Call, state: Int) = refresh()
+        override fun onStateChanged(call: Call, state: Int) {
+            if (state == Call.STATE_DISCONNECTED) logEnd(call)
+            refresh()
+        }
         override fun onDetailsChanged(call: Call, details: Call.Details) = refresh()
         override fun onChildrenChanged(call: Call, children: MutableList<Call>) = refresh()
         override fun onParentChanged(call: Call, parent: Call?) = refresh()
@@ -71,9 +74,39 @@ object CallManager {
     }
 
     fun remove(call: Call) {
+        logEnd(call)
+        logged.remove(call)
         call.unregisterCallback(callback)
         calls.remove(call)
         refresh()
+    }
+
+    private val logged = mutableSetOf<Call>()
+
+    /** Records how a call ended, with Android's reason code, and tells you if it was an error. */
+    private fun logEnd(call: Call) {
+        val ctx = service?.applicationContext ?: return
+        if (!logged.add(call)) return
+        runCatching {
+            val d = call.details
+            val cause = d.disconnectCause
+            val code = cause?.code ?: 0
+            val reason = cause?.reason.orEmpty()
+            val outgoing = d.callDirection == Call.Details.DIRECTION_OUTGOING
+            val connected = d.connectTimeMillis > 0
+            val seconds = if (connected) (System.currentTimeMillis() - d.connectTimeMillis) / 1000 else 0L
+            val number = d.handle?.schemeSpecificPart.orEmpty()
+            // ERROR, RESTRICTED and CONNECTION_MANAGER_NOT_SUPPORTED are failures; so is an outgoing call that never connected for an unclear reason.
+            val problem = code == 1 || code == 8 || code == 10 || (outgoing && !connected && (code == 0 || code == 9))
+            CallBook.add(ctx, if (outgoing) "out" else "in", number, CallBook.causeName(code), code, reason, seconds, problem)
+            if (problem) {
+                CallNotifications.alertProblem(
+                    ctx,
+                    "Call with ${CallBook.mask(number)} failed: ${CallBook.causeName(code)} (code $code)${if (reason.isNotBlank()) ", $reason" else ""}. " +
+                        "Settings > Call check has the details.",
+                )
+            }
+        }
     }
 
     fun setCaller(number: String, contact: ContactWithNumbers?) {

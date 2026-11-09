@@ -30,21 +30,34 @@ class ScreeningService : CallScreeningService() {
         val hidden = number.isBlank() || details.handlePresentation != TelecomManager.PRESENTATION_ALLOWED
 
         scope.launch {
-            val known = !hidden && app.contacts.findByNumber(number) != null
-            val response = when {
-                hidden && prefs.blockHidden -> block()
-                !known && prefs.blockNotInContacts -> block()
+            // Anyone saved in Contacts always rings. If the check itself fails, the call rings too.
+            var known = false
+            var checked = true
+            try {
+                known = !hidden && app.contacts.findByNumber(number) != null
+            } catch (e: Exception) {
+                checked = false
+            }
+            val response: CallResponse
+            val decision: String
+            when {
+                !checked -> { response = CallResponse.Builder().build(); decision = "Allowed (couldn't check contacts)" }
+                known -> { response = CallResponse.Builder().build(); decision = "Allowed: in contacts" }
+                hidden && prefs.blockHidden -> { response = block(); decision = "Blocked: hidden number" }
+                !known && prefs.blockNotInContacts -> { response = block(); decision = "Blocked: not in contacts" }
                 !known && prefs.unknownToVoicemail -> {
                     app.callSettings.rememberSentToVoicemail(number, System.currentTimeMillis())
-                    CallResponse.Builder()
+                    response = CallResponse.Builder()
                         .setDisallowCall(true)
                         .setRejectCall(true) // Rejected calls go to your carrier voicemail.
                         .setSkipCallLog(false)
                         .setSkipNotification(true)
                         .build()
+                    decision = "Sent to voicemail: not in contacts"
                 }
-                else -> CallResponse.Builder().build()
+                else -> { response = CallResponse.Builder().build(); decision = "Allowed" }
             }
+            CallBook.add(app, "screen", number, decision)
             respondToCall(details, response)
         }
     }

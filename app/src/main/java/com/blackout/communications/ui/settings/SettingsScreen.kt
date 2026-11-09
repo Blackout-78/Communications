@@ -98,6 +98,7 @@ fun SettingsScreen(
     var sizeDialog by remember { mutableStateOf(false) }
     var startDialog by remember { mutableStateOf(false) }
     var checkDialog by remember { mutableStateOf(false) }
+    var callCheckDialog by remember { mutableStateOf(false) }
     var editTab by remember { mutableStateOf("Contacts") }
     var pickSlot by remember { mutableStateOf<ColorSlot?>(null) }
     var pickIcon by remember { mutableStateOf(0) } // 1 = main color, 2 = second color
@@ -264,6 +265,8 @@ fun SettingsScreen(
             Row1("Call settings", null, "Unknown callers, decline with message, recording", onOpenCallSettings)
             Divider()
             Row1("Speed dial", null, "Hold a number on the dialpad to call", onOpenSpeedDial)
+            Divider()
+            Row1("Call check", null, "Recent calls, error codes, why a call was blocked") { callCheckDialog = true }
         }
 
         // ------------------------------------------------ 5. Chats
@@ -325,6 +328,7 @@ fun SettingsScreen(
 
     // ------------------------------------------------ Dialogs
     if (checkDialog) MessageCheckDialog { checkDialog = false }
+    if (callCheckDialog) CallCheckDialog { callCheckDialog = false }
     if (themeDialog) ChoiceDialog("Theme", ThemeMode.entries.map { it.label }, a.theme.ordinal, { themeDialog = false }) { i ->
         update { it.copy(theme = ThemeMode.entries[i]) }; themeDialog = false
     }

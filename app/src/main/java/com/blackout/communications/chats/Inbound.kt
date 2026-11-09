@@ -192,3 +192,63 @@ class MmsRetryReceiver : BroadcastReceiver() {
         MmsInbox.attempt(context, intent.getStringExtra("location") ?: return)
     }
 }
+
+/**
+ * What happened to the last text or picture message you sent, and the last picture-message
+ * download problem, with Android's error codes. Shown in Settings > Message check.
+ */
+object TxLog {
+    private fun prefs(c: Context) = c.getSharedPreferences("tx_log", Context.MODE_PRIVATE)
+
+    /** status: "Sent", "Delivered", "Not delivered" or "Failed". */
+    fun send(c: Context, status: String, detail: String = "") {
+        prefs(c).edit().putLong("send_t", System.currentTimeMillis()).putString("send_s", status).putString("send_d", detail).apply()
+    }
+
+    fun downloadProblem(c: Context, detail: String) {
+        prefs(c).edit().putLong("dl_t", System.currentTimeMillis()).putString("dl_d", detail).apply()
+    }
+
+    /** Time, status and detail of the last send, or null. */
+    fun lastSend(c: Context): Triple<Long, String, String>? {
+        val t = prefs(c).getLong("send_t", 0L)
+        if (t == 0L) return null
+        return Triple(t, prefs(c).getString("send_s", "") ?: "", prefs(c).getString("send_d", "") ?: "")
+    }
+
+    fun lastDownloadProblem(c: Context): Pair<Long, String>? {
+        val t = prefs(c).getLong("dl_t", 0L)
+        if (t == 0L) return null
+        return t to (prefs(c).getString("dl_d", "") ?: "")
+    }
+
+    fun smsError(code: Int, extra: Int): String {
+        val name = when (code) {
+            1 -> "generic failure"
+            2 -> "radio off (airplane mode?)"
+            3 -> "bad message"
+            4 -> "no service"
+            5 -> "sending limit reached"
+            6 -> "fixed dialing blocked it"
+            7 -> "short code not allowed"
+            8 -> "short code blocked"
+            else -> "error"
+        }
+        return "$name (code $code${if (extra >= 0) ", carrier code $extra" else ""})"
+    }
+
+    fun mmsError(code: Int, http: Int): String {
+        val name = when (code) {
+            1 -> "unspecified error"
+            2 -> "invalid APN"
+            3 -> "can't connect to the picture-message server"
+            4 -> "server refused (HTTP)"
+            5 -> "network read/write error"
+            6 -> "please retry"
+            7 -> "picture-message settings problem"
+            8 -> "mobile data is off or unavailable"
+            else -> "error"
+        }
+        return "$name (code $code${if (http > 0) ", HTTP $http" else ""})"
+    }
+}

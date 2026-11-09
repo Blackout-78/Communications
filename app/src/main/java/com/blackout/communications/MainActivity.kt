@@ -6,7 +6,10 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.runtime.mutableStateOf
+import com.blackout.communications.calls.BlockedNumbers
+import com.blackout.communications.chats.Messenger
 import com.blackout.communications.chats.MessageNotifications
+import kotlinx.coroutines.launch
 import com.blackout.communications.settings.AppIcon
 import com.blackout.communications.ui.AppRoot
 import com.blackout.communications.ui.theme.ThemeState
@@ -36,6 +39,12 @@ class MainActivity : ComponentActivity() {
                 AppRoot(request = request.value, onRequestHandled = { request.value = null })
             }
         }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        val app = application as CommunicationsApp
+        Messenger.scope.launch { runCatching { BlockedNumbers.clearBlockedContacts(app) } }
     }
 
     override fun onNewIntent(intent: Intent) {

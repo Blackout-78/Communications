@@ -137,18 +137,29 @@ class SmsStatusReceiver : BroadcastReceiver() {
         val row = intent.data ?: return
         when (intent.action) {
             SENT -> if (resultCode == Activity.RESULT_OK) {
-                if (intent.getBooleanExtra("last", true)) MessageStore.setSmsType(context, row, Telephony.Sms.MESSAGE_TYPE_SENT)
+                if (intent.getBooleanExtra("last", true)) {
+                    MessageStore.setSmsType(context, row, Telephony.Sms.MESSAGE_TYPE_SENT)
+                    TxLog.send(context, "Sent")
+                }
             } else {
                 MessageStore.setSmsType(context, row, Telephony.Sms.MESSAGE_TYPE_FAILED)
-                Toast.makeText(context, "A text didn't send. Tap it to try again.", Toast.LENGTH_LONG).show()
+                val why = TxLog.smsError(resultCode, intent.getIntExtra("errorCode", -1))
+                TxLog.send(context, "Failed", why)
+                Toast.makeText(context, "A text didn't send: $why. Tap it to try again.", Toast.LENGTH_LONG).show()
             }
             DELIVERED -> {
                 val pdu = intent.getByteArrayExtra("pdu") ?: return
                 val msg = SmsMessage.createFromPdu(pdu, intent.getStringExtra("format")) ?: return
                 val status = msg.status
                 when {
-                    status == 0 -> MessageStore.setSmsStatus(context, row, Telephony.Sms.STATUS_COMPLETE)
-                    status >= 0x40 -> MessageStore.setSmsStatus(context, row, Telephony.Sms.STATUS_FAILED)
+                    status == 0 -> {
+                        MessageStore.setSmsStatus(context, row, Telephony.Sms.STATUS_COMPLETE)
+                        TxLog.send(context, "Delivered")
+                    }
+                    status >= 0x40 -> {
+                        MessageStore.setSmsStatus(context, row, Telephony.Sms.STATUS_FAILED)
+                        TxLog.send(context, "Not delivered", "carrier status $status")
+                    }
                 }
             }
         }
@@ -168,7 +179,13 @@ class MmsSentReceiver : BroadcastReceiver() {
             context, row,
             if (resultCode == Activity.RESULT_OK) Telephony.Mms.MESSAGE_BOX_SENT else Telephony.Mms.MESSAGE_BOX_FAILED,
         )
-        if (resultCode != Activity.RESULT_OK) Toast.makeText(context, "A picture message didn't send.", Toast.LENGTH_LONG).show()
+        if (resultCode == Activity.RESULT_OK) {
+            TxLog.send(context, "Sent", "picture message")
+        } else {
+            val why = TxLog.mmsError(resultCode, intent.getIntExtra("android.telephony.extra.MMS_HTTP_STATUS", 0))
+            TxLog.send(context, "Failed", "picture message: $why")
+            Toast.makeText(context, "A picture message didn't send: $why.", Toast.LENGTH_LONG).show()
+        }
     }
 }
 
@@ -221,7 +238,12 @@ class MmsWapPushReceiver : BroadcastReceiver() {
 class MmsDownloadedReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
         val file = File(MmsFileProvider.dir(context), intent.getStringExtra("file") ?: return)
-        if (resultCode != Activity.RESULT_OK || !file.exists()) { file.delete(); return }
+        if (resultCode != Activity.RESULT_OK || !file.exists()) {
+            file.delete()
+            // MmsInbox keeps trying; the reason is kept so Message check can show it.
+            TxLog.downloadProblem(context, TxLog.mmsError(resultCode, intent.getIntExtra("android.telephony.extra.MMS_HTTP_STATUS", 0)))
+            return
+        }
         val location = intent.getStringExtra("location")
         val noticeFrom = intent.getStringExtra("from")?.takeIf { it.isNotBlank() }
         val app = context.applicationContext as CommunicationsApp

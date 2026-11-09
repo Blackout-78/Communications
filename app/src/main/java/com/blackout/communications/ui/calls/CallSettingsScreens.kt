@@ -185,6 +185,8 @@ fun CallSettingsScreen(contactsVm: ContactsViewModel, onBack: () -> Unit, onOpen
 
             SectionTitle("Unknown callers")
             InfoCard {
+                ToggleRow("Never block my contacts", "Anyone saved in Contacts always rings and can always text you. A leftover block on a contact's number is removed, unless you blocked them here on purpose.", prefs.protectContacts) { v -> settings.update { it.copy(protectContacts = v) } }
+                HorizontalDivider(color = AppColors.Line)
                 ToggleRow("Send unknown numbers to voicemail", "They don't ring. They show in call history as \"Sent to voicemail\".", prefs.unknownToVoicemail) { v -> settings.update { it.copy(unknownToVoicemail = v) } }
                 HorizontalDivider(color = AppColors.Line)
                 ToggleRow("Block numbers not in contacts", "They don't ring and are hidden from call history.", prefs.blockNotInContacts) { v -> settings.update { it.copy(blockNotInContacts = v) } }

@@ -17,6 +17,7 @@ data class CallPrefs(
     val unknownToVoicemail: Boolean = false,
     val blockHidden: Boolean = false,
     val blockNotInContacts: Boolean = false,
+    val protectContacts: Boolean = true,
     val declineAudience: DeclineAudience = DeclineAudience.Unknown,
     val declineSelected: Set<Long> = emptySet(),
     val quickReplies: List<String> = DEFAULT_REPLIES,
@@ -43,6 +44,7 @@ class CallSettings(context: Context) {
             .putBoolean("unknownToVoicemail", next.unknownToVoicemail)
             .putBoolean("blockHidden", next.blockHidden)
             .putBoolean("blockNotInContacts", next.blockNotInContacts)
+            .putBoolean("protectContacts", next.protectContacts)
             .putString("declineAudience", next.declineAudience.name)
             .putStringSet("declineSelected", next.declineSelected.map { it.toString() }.toSet())
             .putString("quickReplies", next.quickReplies.joinToString("\n"))
@@ -57,6 +59,7 @@ class CallSettings(context: Context) {
         unknownToVoicemail = prefs.getBoolean("unknownToVoicemail", false),
         blockHidden = prefs.getBoolean("blockHidden", false),
         blockNotInContacts = prefs.getBoolean("blockNotInContacts", false),
+        protectContacts = prefs.getBoolean("protectContacts", true),
         declineAudience = runCatching { DeclineAudience.valueOf(prefs.getString("declineAudience", null) ?: "") }
             .getOrDefault(DeclineAudience.Unknown),
         declineSelected = prefs.getStringSet("declineSelected", emptySet())!!.mapNotNull { it.toLongOrNull() }.toSet(),

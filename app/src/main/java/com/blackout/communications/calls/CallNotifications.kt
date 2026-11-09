@@ -9,13 +9,16 @@ import android.content.Intent
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.app.Person
+import com.blackout.communications.MainActivity
 import com.blackout.communications.R
 
 /** The incoming call alert and the "call in progress" notification. */
 object CallNotifications {
     private const val CHANNEL_INCOMING = "incoming_calls"
     private const val CHANNEL_ONGOING = "ongoing_calls"
+    private const val CHANNEL_PROBLEMS = "call_problems"
     const val ID = 1001
+    private const val PROBLEM_ID = 1002
 
     fun createChannels(context: Context) {
         val nm = context.getSystemService(NotificationManager::class.java)
@@ -28,6 +31,30 @@ object CallNotifications {
         nm.createNotificationChannel(
             NotificationChannel(CHANNEL_ONGOING, "Calls in progress", NotificationManager.IMPORTANCE_LOW),
         )
+        nm.createNotificationChannel(
+            NotificationChannel(CHANNEL_PROBLEMS, "Call problems", NotificationManager.IMPORTANCE_HIGH),
+        )
+    }
+
+    /** Tells you a call failed, with the reason code. */
+    fun alertProblem(context: Context, text: String) {
+        runCatching {
+            createChannels(context)
+            val open = PendingIntent.getActivity(
+                context, 5,
+                Intent(context, MainActivity::class.java).setAction(MainActivity.ACTION_OPEN_TAB).putExtra(MainActivity.EXTRA_TAB, "Settings"),
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
+            )
+            val n = NotificationCompat.Builder(context, CHANNEL_PROBLEMS)
+                .setSmallIcon(R.drawable.ic_stat_call)
+                .setContentTitle("A call didn't go through")
+                .setContentText(text)
+                .setStyle(NotificationCompat.BigTextStyle().bigText(text))
+                .setAutoCancel(true)
+                .setContentIntent(open)
+                .build()
+            NotificationManagerCompat.from(context).notify(PROBLEM_ID, n)
+        }
     }
 
     fun showIncoming(context: Context, info: CallInfo) {

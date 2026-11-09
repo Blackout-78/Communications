@@ -44,8 +44,13 @@ class CallService : InCallService() {
         val app = application as CommunicationsApp
         scope.launch {
             // Look up the caller first, so ringing uses their own ringtone.
-            val contact = app.contacts.findByNumber(number)
-            if (number != null) CallManager.setCaller(number, contact)
+            // If the lookup fails, the call still rings (with the default ringtone).
+            try {
+                val contact = app.contacts.findByNumber(number)
+                if (number != null) CallManager.setCaller(number, contact)
+            } catch (e: Exception) {
+                // ring anyway
+            }
             lookedUp += call
             update()
         }

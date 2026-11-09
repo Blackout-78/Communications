@@ -5,6 +5,7 @@ import android.net.Uri
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.blackout.communications.CommunicationsApp
+import com.blackout.communications.calls.BlockedNumbers
 import com.blackout.communications.data.Contact
 import com.blackout.communications.data.ContactWithNumbers
 import com.blackout.communications.data.PhoneNumber
@@ -70,7 +71,12 @@ class ContactsViewModel(application: Application) : AndroidViewModel(application
     fun contact(id: Long): Flow<ContactWithNumbers?> = repo.observe(id)
 
     fun save(contact: Contact, numbers: List<PhoneNumber>, previousPhoto: String?, onSaved: (Long) -> Unit) {
-        viewModelScope.launch { onSaved(repo.save(contact, numbers, previousPhoto)) }
+        viewModelScope.launch {
+            val id = repo.save(contact, numbers, previousPhoto)
+            // A saved contact is never left blocked by an automatic or leftover block.
+            runCatching { BlockedNumbers.clearBlockedContacts(getApplication<CommunicationsApp>()) }
+            onSaved(id)
+        }
     }
 
     fun delete(id: Long) = viewModelScope.launch { repo.delete(id) }

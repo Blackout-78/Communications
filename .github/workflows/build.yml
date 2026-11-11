@@ -7,14 +7,17 @@ on:
     branches: [main]
   workflow_dispatch:
 
-permissions:
-  contents: write
+permissions: {}
 
 jobs:
   build:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262  # v4
+        with:
+          persist-credentials: false
       - name: Security guard (blocks the build if something dangerous was added)
         run: python3 .github/guard/guard.py
       - name: Check the Gradle wrapper is the official one
@@ -34,6 +37,7 @@ jobs:
             exit 1
           fi
           # Remove spaces, line breaks and a pasted label, which copying on Windows can add.
+          umask 077
           printf '%s' "$KEYSTORE_BASE64" | sed 's/KEYSTORE_BASE64//g' | tr -d ' \r\n\t' | base64 -d > "$RUNNER_TEMP/release.jks"
           echo "SIGNING_STORE_FILE=$RUNNER_TEMP/release.jks" >> "$GITHUB_ENV"
 
@@ -54,6 +58,10 @@ jobs:
           chmod +x gradlew
           ./gradlew assembleRelease -PbuildNumber=${{ github.run_number }} --no-daemon
           cp app/build/outputs/apk/release/app-release.apk "Communications-build-${{ github.run_number }}.apk"
+
+      - name: Remove the signing key
+        if: always()
+        run: rm -f "$RUNNER_TEMP/release.jks"
 
       - name: Post it under Releases
         uses: softprops/action-gh-release@3bb12739c298aeb8a4eeaf626c5b8d85266b0e65  # v2

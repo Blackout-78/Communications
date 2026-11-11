@@ -35,15 +35,17 @@ import kotlinx.coroutines.launch
  */
 object MessageNotifications {
     // Android keeps a channel's sound and vibration as first created, so changes need a new channel id.
-    private const val CHANNEL = "messages_v2"
+    private const val CHANNEL = "messages_v3"
     private const val OLD_CHANNEL = "messages"
+    private const val OLD_CHANNEL_V2 = "messages_v2"
     const val EXTRA_THREAD = "thread_id"
     const val KEY_REPLY = "reply"
 
-    /** New texts: sound, vibration, pop-up banner, and full message on the lock screen. */
+    /** New texts: sound, vibration, pop-up banner. The lock screen shows only "New message". */
     private fun channel(context: Context) {
         val nm = context.getSystemService(NotificationManager::class.java)
         nm.deleteNotificationChannel(OLD_CHANNEL)
+        nm.deleteNotificationChannel(OLD_CHANNEL_V2)
         nm.createNotificationChannel(
             NotificationChannel(CHANNEL, "Messages", NotificationManager.IMPORTANCE_HIGH).apply {
                 description = "New texts and picture messages"
@@ -57,7 +59,7 @@ object MessageNotifications {
                 enableVibration(true)
                 vibrationPattern = longArrayOf(0, 250, 150, 250)
                 enableLights(true)
-                lockscreenVisibility = android.app.Notification.VISIBILITY_PUBLIC
+                lockscreenVisibility = android.app.Notification.VISIBILITY_PRIVATE
                 setShowBadge(true)
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) setAllowBubbles(true)
             },
@@ -96,7 +98,8 @@ object MessageNotifications {
                 .setStyle(NotificationCompat.BigTextStyle().bigText(body.ifBlank { "Photo" }))
                 .setCategory(NotificationCompat.CATEGORY_MESSAGE)
                 .setPriority(NotificationCompat.PRIORITY_HIGH)
-                .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
+                .setVisibility(NotificationCompat.VISIBILITY_PRIVATE)
+                .setPublicVersion(publicVersion(app))
                 .setDefaults(NotificationCompat.DEFAULT_ALL)
                 .setAutoCancel(true)
                 .setContentIntent(PendingIntent.getActivity(app, id, open, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE))
@@ -104,6 +107,14 @@ object MessageNotifications {
             NotificationManagerCompat.from(app).notify(id, n)
         }
     }
+
+    /** What the lock screen shows instead of the sender and text. */
+    private fun publicVersion(context: Context) =
+        NotificationCompat.Builder(context, CHANNEL)
+            .setSmallIcon(R.drawable.ic_stat_message)
+            .setContentTitle("New message")
+            .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
+            .build()
 
     /** A notification about a problem with an incoming message (for example, a picture message that didn't download). */
     fun alert(context: Context, id: Int, title: String, text: String) {
@@ -165,7 +176,7 @@ object MessageNotifications {
             0, "Reply",
             PendingIntent.getBroadcast(
                 app, threadId.toInt(),
-                Intent(app, MessageActionReceiver::class.java).setAction(MessageActionReceiver.REPLY).putExtra(EXTRA_THREAD, threadId).putExtra("address", address),
+                Intent(app, MessageActionReceiver::class.java).setAction(MessageActionReceiver.REPLY).putExtra(EXTRA_THREAD, threadId),
                 PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_MUTABLE,
             ),
         ).addRemoteInput(RemoteInput.Builder(KEY_REPLY).setLabel("Reply").build())
@@ -192,7 +203,8 @@ object MessageNotifications {
             .addAction(reply)
             .addAction(markRead)
             .setColor(AppColors.Accent.toArgb())
-            .setVisibility(NotificationCompat.VISIBILITY_PUBLIC) // show sender and message on the lock screen
+            .setVisibility(NotificationCompat.VISIBILITY_PRIVATE) // sender and text stay off the lock screen
+            .setPublicVersion(publicVersion(app))
             .setPriority(NotificationCompat.PRIORITY_HIGH)
             .setDefaults(NotificationCompat.DEFAULT_ALL) // sound and buzz on older Android versions
             .setOnlyAlertOnce(false) // every new text makes a sound, even if the chat already had a notification
@@ -270,9 +282,19 @@ class MessageActionReceiver : BroadcastReceiver() {
         when (intent.action) {
             REPLY -> {
                 val text = RemoteInput.getResultsFromIntent(intent)?.getCharSequence(MessageNotifications.KEY_REPLY)?.toString()
-                val address = intent.getStringExtra("address")
-                if (!text.isNullOrBlank() && address != null) Messenger.sendText(context, address, text, threadId)
-                markRead(context, threadId)
+                // The number comes from the conversation itself, never from the intent, so another
+                // app cannot redirect a reply to a different number.
+                val pending = goAsync()
+                Messenger.scope.launch {
+                    try {
+                        val address = MessageStore.threads(context).firstOrNull { it.id == threadId }?.addresses?.firstOrNull()
+                        if (!text.isNullOrBlank() && address != null) Messenger.sendText(context, address, text, threadId)
+                        MessageStore.markRead(context, threadId)
+                        MessageNotifications.cancel(context, threadId)
+                    } finally {
+                        pending.finish()
+                    }
+                }
             }
             MARK_READ -> markRead(context, threadId)
         }

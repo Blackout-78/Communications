@@ -258,8 +258,8 @@ class MmsDownloadedReceiver : BroadcastReceiver() {
                 val msg = Pdu.parse(bytes)
                 from = msg?.from?.takeIf { it.isNotBlank() } ?: from
                 val all = msg?.parts.orEmpty()
-                val shown = all.filter { it.isText || it.isImage }
-                val hidden = all.count { !it.isText && !it.isImage && !it.contentType.startsWith("application/smil") }
+                val shown = all.filter { it.isText || it.isImage || it.isVideo }
+                val hidden = all.count { !it.isText && !it.isImage && !it.isVideo && !it.contentType.startsWith("application/smil") }
                 // Something this app can't show still leaves a visible line, never an empty message.
                 val note = when {
                     msg == null -> "[Picture message couldn't be read]"
@@ -274,7 +274,7 @@ class MmsDownloadedReceiver : BroadcastReceiver() {
                     msg?.dateSec ?: (System.currentTimeMillis() / 1000), parts, msg?.transactionId,
                 )
                 RxLog.mark(app, RxLog.MMS_SAVED)
-                val text = parts.firstOrNull { it.isText }?.text() ?: "Picture message"
+                val text = parts.firstOrNull { it.isText }?.text() ?: if (parts.any { it.isVideo }) "Video message" else "Picture message"
                 MessageNotifications.showFor(app, thread, from, text)
             } catch (e: Exception) {
                 MessageNotifications.alert(app, from.hashCode(), "Picture message", "A picture message from $from arrived but couldn't be saved.")

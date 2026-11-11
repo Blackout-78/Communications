@@ -16,6 +16,7 @@ data class ChatMessage(
     val status: Status,
     val images: List<Uri>,
     val from: String?,
+    val videos: List<Uri> = emptyList(),
 ) {
     enum class Status { Received, Sending, Sent, Delivered, Failed }
 }
@@ -76,7 +77,7 @@ object MessageStore {
                     if (c.getInt(2) == 0) continue // Empty conversations stay hidden.
                     val ids = c.getString(3).orEmpty().split(" ").mapNotNull { it.toLongOrNull() }
                     val addresses = ids.mapNotNull { canonical[it] }.filter { it.isNotBlank() }
-                    val snippet = c.getString(4).orEmpty().ifBlank { if (c.getInt(5) != 0) "Photo" else "" }
+                    val snippet = c.getString(4).orEmpty().ifBlank { if (c.getInt(5) != 0) "Picture or video" else "" }
                     out += ChatThread(c.getLong(0), addresses, snippet, c.getLong(1), unread[c.getLong(0)] ?: 0)
                 }
             }
@@ -127,6 +128,7 @@ object MessageStore {
         if (mms.isNotEmpty()) {
             val texts = HashMap<Long, MutableList<String>>()
             val images = HashMap<Long, MutableList<Uri>>()
+            val videos = HashMap<Long, MutableList<Uri>>()
             runCatching {
                 cr.query(
                     MMS_PART, arrayOf("_id", "mid", "ct", "text"),
@@ -138,6 +140,7 @@ object MessageStore {
                         when {
                             ct == "text/plain" -> c.getString(3)?.let { texts.getOrPut(mid) { mutableListOf() } += it }
                             ct.startsWith("image/") -> images.getOrPut(mid) { mutableListOf() } += Uri.parse("content://mms/part/${c.getLong(0)}")
+                            ct.startsWith("video/") -> videos.getOrPut(mid) { mutableListOf() } += Uri.parse("content://mms/part/${c.getLong(0)}")
                         }
                     }
                 }
@@ -154,6 +157,7 @@ object MessageStore {
                 out += ChatMessage(
                     id, true, box != Telephony.Mms.MESSAGE_BOX_INBOX, texts[id].orEmpty().joinToString("\n"), date * 1000, status,
                     images[id].orEmpty(), if (group && box == Telephony.Mms.MESSAGE_BOX_INBOX) mmsSender(context, id) else null,
+                    videos[id].orEmpty(),
                 )
             }
         }

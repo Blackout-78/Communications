@@ -26,6 +26,7 @@ object Pdu {
     class Part(val contentType: String, val data: ByteArray, val charset: Int = 106, val name: String? = null) {
         val isText get() = contentType.startsWith("text/plain")
         val isImage get() = contentType.startsWith("image/")
+        val isVideo get() = contentType.startsWith("video/")
         fun text(): String = String(data, charsetOf(charset))
     }
 

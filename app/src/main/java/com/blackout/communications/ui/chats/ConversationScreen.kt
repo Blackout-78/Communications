@@ -38,6 +38,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.outlined.AttachFile
 import androidx.compose.material.icons.outlined.Download
 import androidx.compose.material.icons.outlined.Phone
@@ -164,6 +165,14 @@ fun ConversationScreen(
         }
     }
 
+    var playing by remember { mutableStateOf<Uri?>(null) }
+    fun saveVideo(uri: Uri) {
+        scope.launch {
+            val saved = com.blackout.communications.chats.SaveVideo.save(context, uri)
+            Toast.makeText(context, if (saved != null) "Saved to Movies/Communications" else "Couldn't save this video", Toast.LENGTH_SHORT).show()
+        }
+    }
+
     val pickImages = rememberLauncherForActivityResult(ActivityResultContracts.PickMultipleVisualMedia(5)) { uris ->
         attachments.addAll(uris.take(5 - attachments.size))
     }
@@ -227,6 +236,7 @@ fun ConversationScreen(
                         is Item.Msg -> MessageBubble(
                             item.m,
                             onImageClick = { viewing = it },
+                            onVideoClick = { playing = it },
                             modifier = Modifier.combinedClickable(
                                 onClick = {
                                     if (item.m.status == ChatMessage.Status.Failed && !item.m.isMms && address != null) {
@@ -317,6 +327,10 @@ fun ConversationScreen(
                         m.images.forEach { savePicture(it) }
                         messageMenu = null
                     }.padding(vertical = 12.dp))
+                    if (m.videos.isNotEmpty()) Text(if (m.videos.size > 1) "Save ${m.videos.size} videos" else "Save video", fontSize = 16.sp, modifier = Modifier.fillMaxWidth().clickable {
+                        m.videos.forEach { saveVideo(it) }
+                        messageMenu = null
+                    }.padding(vertical = 12.dp))
                     Text("Delete", fontSize = 16.sp, color = AppColors.Missed, modifier = Modifier.fillMaxWidth().clickable {
                         Messenger.scope.launch { MessageStore.deleteMessage(context, m) }
                         messageMenu = null
@@ -338,6 +352,41 @@ fun ConversationScreen(
                     IconButton(onClick = { viewing = null }) { Icon(Icons.Filled.Close, "Close", tint = Color.White) }
                     Box(Modifier.weight(1f))
                     TextButton(onClick = { savePicture(uri) }) {
+                        Icon(Icons.Outlined.Download, null, tint = Color.White)
+                        Text("Save", color = Color.White, modifier = Modifier.padding(start = 6.dp))
+                    }
+                }
+            }
+        }
+    }
+
+    playing?.let { uri ->
+        androidx.compose.ui.window.Dialog(
+            onDismissRequest = { playing = null },
+            properties = androidx.compose.ui.window.DialogProperties(usePlatformDefaultWidth = false),
+        ) {
+            Box(Modifier.fillMaxSize().background(Color.Black)) {
+                androidx.compose.ui.viewinterop.AndroidView(
+                    modifier = Modifier.fillMaxSize(),
+                    factory = { ctx ->
+                        android.widget.VideoView(ctx).apply {
+                            val controller = android.widget.MediaController(ctx)
+                            controller.setAnchorView(this)
+                            setMediaController(controller)
+                            setVideoURI(uri)
+                            setOnPreparedListener { start() }
+                            setOnErrorListener { _, _, _ ->
+                                Toast.makeText(ctx, "This video can't be played", Toast.LENGTH_SHORT).show()
+                                true
+                            }
+                        }
+                    },
+                    onRelease = { it.stopPlayback() },
+                )
+                Row(Modifier.align(Alignment.TopStart).fillMaxWidth().padding(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                    IconButton(onClick = { playing = null }) { Icon(Icons.Filled.Close, "Close", tint = Color.White) }
+                    Box(Modifier.weight(1f))
+                    TextButton(onClick = { saveVideo(uri) }) {
                         Icon(Icons.Outlined.Download, null, tint = Color.White)
                         Text("Save", color = Color.White, modifier = Modifier.padding(start = 6.dp))
                     }
@@ -402,23 +451,27 @@ private fun dayLabel(time: Long): String {
 }
 
 @Composable
-private fun MessageBubble(m: ChatMessage, onImageClick: (Uri) -> Unit, modifier: Modifier) {
+private fun MessageBubble(m: ChatMessage, onImageClick: (Uri) -> Unit, onVideoClick: (Uri) -> Unit, modifier: Modifier) {
     val mine = m.outgoing
+    val hasMedia = m.images.isNotEmpty() || m.videos.isNotEmpty()
     Row(Modifier.fillMaxWidth(), horizontalArrangement = if (mine) Arrangement.End else Arrangement.Start) {
         Column(
             modifier
                 .widthIn(max = 290.dp)
                 .clip(RoundedCornerShape(topStart = 18.dp, topEnd = 18.dp, bottomStart = if (mine) 18.dp else 4.dp, bottomEnd = if (mine) 4.dp else 18.dp))
                 .background(if (mine) AppColors.MyBubble else AppColors.TheirBubble)
-                .padding(horizontal = if (m.images.isNotEmpty()) 6.dp else 14.dp, vertical = if (m.images.isNotEmpty()) 6.dp else 10.dp),
+                .padding(horizontal = if (hasMedia) 6.dp else 14.dp, vertical = if (hasMedia) 6.dp else 10.dp),
             verticalArrangement = Arrangement.spacedBy(6.dp),
         ) {
             m.images.forEach { uri ->
                 UriImage(uri, Modifier.widthIn(max = 260.dp).heightIn(max = 320.dp).clip(RoundedCornerShape(12.dp)).clickable { onImageClick(uri) })
             }
+            m.videos.forEach { uri ->
+                VideoThumb(uri, Modifier.widthIn(max = 260.dp).heightIn(max = 320.dp).clip(RoundedCornerShape(12.dp)).clickable { onVideoClick(uri) })
+            }
             if (m.body.isNotBlank()) {
                 val textColor = AppColors.onColor(if (mine) AppColors.MyBubble else AppColors.TheirBubble)
-                Text(linkify(m.body, textColor), color = textColor, fontSize = 15.sp, lineHeight = 21.sp, modifier = Modifier.padding(horizontal = if (m.images.isNotEmpty()) 8.dp else 0.dp))
+                Text(linkify(m.body, textColor), color = textColor, fontSize = 15.sp, lineHeight = 21.sp, modifier = Modifier.padding(horizontal = if (hasMedia) 8.dp else 0.dp))
             }
             val time = SimpleDateFormat("h:mm a", Locale.getDefault()).format(Date(m.date))
             val status = when (m.status) {
@@ -435,8 +488,35 @@ private fun MessageBubble(m: ChatMessage, onImageClick: (Uri) -> Unit, modifier:
                     m.status == ChatMessage.Status.Failed -> Color(0xFFFFD1D1)
                     else -> AppColors.onColor(if (mine) AppColors.MyBubble else AppColors.TheirBubble).copy(alpha = 0.75f)
                 },
-                modifier = Modifier.align(Alignment.End).padding(horizontal = if (m.images.isNotEmpty()) 8.dp else 0.dp),
+                modifier = Modifier.align(Alignment.End).padding(horizontal = if (hasMedia) 8.dp else 0.dp),
             )
+        }
+    }
+}
+
+/** A video's first frame with a play button on top. Tap to play. */
+@Composable
+private fun VideoThumb(uri: Uri, modifier: Modifier) {
+    val context = LocalContext.current
+    val frame by produceState<ImageBitmap?>(null, uri) {
+        value = withContext(Dispatchers.IO) {
+            runCatching {
+                val r = android.media.MediaMetadataRetriever()
+                try {
+                    r.setDataSource(context, uri)
+                    r.getFrameAtTime(0, android.media.MediaMetadataRetriever.OPTION_CLOSEST_SYNC)?.asImageBitmap()
+                } finally {
+                    r.release()
+                }
+            }.getOrNull()
+        }
+    }
+    Box(modifier, contentAlignment = Alignment.Center) {
+        val f = frame
+        if (f != null) Image(f, "Video", contentScale = ContentScale.Crop, modifier = Modifier.matchParentSize())
+        else Box(Modifier.size(160.dp).background(Color(0xFF2E2E33)))
+        Box(Modifier.size(52.dp).clip(androidx.compose.foundation.shape.CircleShape).background(Color.Black.copy(alpha = 0.55f)), contentAlignment = Alignment.Center) {
+            Icon(Icons.Filled.PlayArrow, "Play video", tint = Color.White, modifier = Modifier.size(32.dp))
         }
     }
 }

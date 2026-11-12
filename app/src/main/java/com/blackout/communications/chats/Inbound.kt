@@ -165,7 +165,9 @@ object MmsInbox {
             Intent(c, MmsDownloadedReceiver::class.java).putExtra("file", file.name).putExtra("from", from).putExtra("location", location),
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_MUTABLE,
         )
-        runCatching { Messenger.smsManager(c).downloadMultimediaMessage(c, location, uri, null, done) }
+        // Ask for the full-size message: raise the phone's own size cap so big videos aren't refused.
+        val limits = android.os.Bundle().apply { putInt(android.telephony.SmsManager.MMS_CONFIG_MAX_MESSAGE_SIZE, 50 * 1024 * 1024) }
+        runCatching { Messenger.smsManager(c).downloadMultimediaMessage(c, location, uri, limits, done) }
     }
 
     private fun alarmIntent(c: Context, location: String): PendingIntent = PendingIntent.getBroadcast(

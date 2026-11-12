@@ -317,7 +317,7 @@ fun SettingsScreen(
 
         // ------------------------------------------------ 8. About
         Section("About") {
-            Text("Version ${BuildConfigInfo.versionName(context)}", fontSize = 15.sp, modifier = Modifier.padding(start = 16.dp, top = 14.dp))
+            Text(com.blackout.communications.Version.full, fontSize = 15.sp, modifier = Modifier.padding(start = 16.dp, top = 14.dp))
             Text(
                 "This app has no internet permission. No data leaves your phone.",
                 fontSize = 14.sp, color = AppColors.SubText, modifier = Modifier.padding(16.dp),

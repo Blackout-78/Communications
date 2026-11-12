@@ -262,6 +262,11 @@ fun AppRoot(request: LaunchRequest?, onRequestHandled: () -> Unit) {
 /** Dark rounded bar with an icon and a label for each tab. */
 @Composable
 private fun TabBar(selected: Tab, onSelect: (Tab) -> Unit) {
+    Column {
+    Text(
+        com.blackout.communications.Version.tag, color = AppColors.SubText, fontSize = 10.sp,
+        modifier = Modifier.padding(start = 20.dp, bottom = 2.dp).clickable { onSelect(Tab.Settings) },
+    )
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -288,5 +293,6 @@ private fun TabBar(selected: Tab, onSelect: (Tab) -> Unit) {
                 Text(t.label, color = color, fontSize = 11.sp, fontWeight = if (active) FontWeight.SemiBold else FontWeight.Medium)
             }
         }
+    }
     }
 }

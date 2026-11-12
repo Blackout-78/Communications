@@ -17,6 +17,7 @@ jobs:
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262  # v4
         with:
+          fetch-depth: 0
           persist-credentials: false
       - name: Security guard (blocks the build if something dangerous was added)
         run: python3 .github/guard/guard.py
@@ -63,13 +64,22 @@ jobs:
         if: always()
         run: rm -f "$RUNNER_TEMP/release.jks"
 
+      - name: Write what's new
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          bash .github/release-notes.sh '^(build-|v[0-9])' . > release-body.md
+          {
+            echo
+            echo 'Download **Communications-build-${{ github.run_number }}.apk** below and open it on your Android phone.'
+            echo 'Installs over earlier builds and keeps your contacts.'
+          } >> release-body.md
+
       - name: Post it under Releases
         uses: softprops/action-gh-release@3bb12739c298aeb8a4eeaf626c5b8d85266b0e65  # v2
         with:
-          tag_name: build-${{ github.run_number }}
-          name: Communications build ${{ github.run_number }}
-          body: |
-            Download **Communications-build-${{ github.run_number }}.apk** below and open it on your Android phone.
-            Installs over earlier builds and keeps your contacts.
+          tag_name: v1.0.${{ github.run_number }}
+          name: Communications 1.0.${{ github.run_number }}
+          body_path: release-body.md
           files: Communications-build-${{ github.run_number }}.apk
           make_latest: true

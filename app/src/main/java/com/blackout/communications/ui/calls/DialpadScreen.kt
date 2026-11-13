@@ -106,7 +106,7 @@ fun DialpadScreen(contactsVm: ContactsViewModel, initial: String, onBack: () -> 
                                 digit == '1' -> Icon(Icons.Outlined.Voicemail, null, tint = AppColors.SubText, modifier = Modifier.size(14.dp))
                                 letters.isNotEmpty() -> Text(letters, fontSize = 10.sp, color = AppColors.SubText, letterSpacing = 1.sp)
                             }
-                            Text(firstName ?: "", fontSize = 11.sp, fontWeight = FontWeight.SemiBold, color = AppColors.Accent, maxLines = 1)
+                            Text(firstName ?: "", fontSize = 11.sp, fontWeight = FontWeight.SemiBold, color = AppColors.AccentInk, maxLines = 1)
                         }
                     }
                 }

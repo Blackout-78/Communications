@@ -222,8 +222,8 @@ fun CallSettingsScreen(contactsVm: ContactsViewModel, onBack: () -> Unit, onOpen
                     }
                 }
                 TextButton(onClick = { editReply = -1 }, modifier = Modifier.padding(start = 6.dp)) {
-                    Icon(Icons.Filled.Add, null, tint = AppColors.Accent)
-                    Text("Add reply", color = AppColors.Accent, modifier = Modifier.padding(start = 6.dp))
+                    Icon(Icons.Filled.Add, null, tint = AppColors.AccentInk)
+                    Text("Add reply", color = AppColors.AccentInk, modifier = Modifier.padding(start = 6.dp))
                 }
             }
 
@@ -397,7 +397,7 @@ fun BlockedNumbersScreen(onBack: () -> Unit) {
                 Column {
                     Row(Modifier.fillMaxWidth().padding(vertical = 6.dp), verticalAlignment = Alignment.CenterVertically) {
                         Text(formatNumber(n), fontSize = 16.sp, modifier = Modifier.weight(1f))
-                        TextButton(onClick = { BlockedNumbers.unblock(context, n); numbers = BlockedNumbers.list(context) }) { Text("Unblock", color = AppColors.Accent) }
+                        TextButton(onClick = { BlockedNumbers.unblock(context, n); numbers = BlockedNumbers.list(context) }) { Text("Unblock", color = AppColors.AccentInk) }
                     }
                     HorizontalDivider(color = AppColors.Line)
                 }
@@ -455,7 +455,7 @@ fun RecordingsScreen(onBack: () -> Unit) {
                             }
                             IconButton(onClick = {
                                 runCatching { context.startActivity(Intent(Intent.ACTION_VIEW).setDataAndType(r.uri, "audio/*").addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)) }
-                            }) { Icon(Icons.Outlined.PlayArrow, "Play", tint = AppColors.Accent) }
+                            }) { Icon(Icons.Outlined.PlayArrow, "Play", tint = AppColors.AccentInk) }
                             IconButton(onClick = {
                                 val send = Intent(Intent.ACTION_SEND).setType("audio/*").putExtra(Intent.EXTRA_STREAM, r.uri).addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
                                 runCatching { context.startActivity(Intent.createChooser(send, "Share recording")) }

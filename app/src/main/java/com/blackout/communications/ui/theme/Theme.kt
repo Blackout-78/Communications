@@ -27,8 +27,8 @@ object ThemeState {
 
 private data class Base(val bg: Color, val card: Color, val line: Color, val text: Color, val sub: Color, val their: Color)
 
-private val DarkBase = Base(Color(0xFF0E0E10), Color(0xFF1C1C1F), Color(0xFF2A2A2E), Color(0xFFF2F2F2), Color(0xFFA0A0A8), Color(0xFF232327))
-private val BlackBase = Base(Color(0xFF000000), Color(0xFF141416), Color(0xFF222226), Color(0xFFF2F2F2), Color(0xFF9A9AA2), Color(0xFF1C1C1F))
+private val DarkBase = Base(Color(0xFF000000), Color(0xFF111111), Color(0xFF3A3A3A), Color(0xFFF2F2F2), Color(0xFFA0A0A8), Color(0xFF1C1C1C))
+private val BlackBase = Base(Color(0xFF000000), Color(0xFF111111), Color(0xFF3A3A3A), Color(0xFFF2F2F2), Color(0xFF9A9AA2), Color(0xFF1C1C1C))
 private val LightBase = Base(Color(0xFFF7F7F9), Color(0xFFFFFFFF), Color(0xFFE2E2E6), Color(0xFF141416), Color(0xFF5E5E66), Color(0xFFE9E9EE))
 
 /** App colors. Your choices in Settings > Appearance override the theme's own colors. */
@@ -43,12 +43,14 @@ object AppColors {
     private fun custom(slot: ColorSlot): Color? =
         ThemeState.appearance.paletteFor(ThemeState.activeTab).colors[slot]?.let { Color(it) }
 
-    val Accent: Color get() = custom(ColorSlot.Accent) ?: Color(0xFF7C5CFF)
+    val Accent: Color get() = custom(ColorSlot.Accent) ?: Color(0xFF23295D)
     val Background: Color get() = custom(ColorSlot.Background) ?: base.bg
     val Text: Color get() = custom(ColorSlot.Text) ?: base.text
     val Card: Color get() = custom(ColorSlot.Background)?.let { lerp(it, Text, 0.08f) } ?: base.card
     val Line: Color get() = custom(ColorSlot.Background)?.let { lerp(it, Text, 0.14f) } ?: base.line
     val SubText: Color get() = if (custom(ColorSlot.Text) != null || custom(ColorSlot.Background) != null) lerp(Background, Text, 0.65f) else base.sub
+    /** Accent made lighter so text and icons stay readable on black. */
+    val AccentInk: Color get() = lerp(Accent, Color.White, 0.6f)
     val MyBubble: Color get() = custom(ColorSlot.MyBubble) ?: Accent
     val TheirBubble: Color get() = custom(ColorSlot.TheirBubble) ?: base.their
 

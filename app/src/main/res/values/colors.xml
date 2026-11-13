@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="background">#FF0E0E10</color>
-    <color name="accent">#FF7C5CFF</color>
+    <color name="background">#FF000000</color>
+    <color name="accent">#FF23295D</color>
     <!-- App icon color. Stage 4 lets you pick any color for the icon. -->
     <color name="icon_color">#FF377DC0</color>
     <color name="icon_background">#FFFFFFFF</color>

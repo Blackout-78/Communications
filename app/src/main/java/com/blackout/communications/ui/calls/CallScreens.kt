@@ -399,6 +399,6 @@ private fun InCallKeypad(onDigit: (Char) -> Unit, onHide: () -> Unit) {
                 }
             }
         }
-        TextButton(onClick = onHide) { Text("Hide keypad", color = AppColors.Accent) }
+        TextButton(onClick = onHide) { Text("Hide keypad", color = AppColors.AccentInk) }
     }
 }

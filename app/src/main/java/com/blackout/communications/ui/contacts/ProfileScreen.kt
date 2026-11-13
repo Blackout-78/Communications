@@ -151,8 +151,8 @@ fun ProfileScreen(
                                 Text(formatNumber(n.number), fontSize = 16.sp)
                                 Text(if (n.isMain) "${n.label} · Main" else n.label, color = AppColors.SubText, fontSize = 13.sp)
                             }
-                            IconButton(onClick = { onMessage(n.number) }) { Icon(Icons.Outlined.ChatBubbleOutline, "Message ${n.number}", tint = AppColors.Accent) }
-                            IconButton(onClick = { dial(context, n.number) }) { Icon(Icons.Outlined.Phone, "Call ${n.number}", tint = AppColors.Accent) }
+                            IconButton(onClick = { onMessage(n.number) }) { Icon(Icons.Outlined.ChatBubbleOutline, "Message ${n.number}", tint = AppColors.AccentInk) }
+                            IconButton(onClick = { dial(context, n.number) }) { Icon(Icons.Outlined.Phone, "Call ${n.number}", tint = AppColors.AccentInk) }
                         }
                     }
                 }
@@ -166,7 +166,7 @@ fun ProfileScreen(
                     }
                     if (c.contact.ringtonePath != null) {
                         IconButton(onClick = { RingtonePreview.toggle(context, c.contact.ringtonePath) }) {
-                            Icon(if (previewing) Icons.Filled.Stop else Icons.Filled.PlayArrow, if (previewing) "Stop" else "Play ringtone", tint = AppColors.Accent)
+                            Icon(if (previewing) Icons.Filled.Stop else Icons.Filled.PlayArrow, if (previewing) "Stop" else "Play ringtone", tint = AppColors.AccentInk)
                         }
                     }
                 }

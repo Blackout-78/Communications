@@ -170,7 +170,7 @@ fun SettingsScreen(
                 Row(Modifier.fillMaxWidth().padding(start = 16.dp, end = 8.dp), verticalAlignment = Alignment.CenterVertically) {
                     Text(label, fontSize = 14.sp, modifier = Modifier.weight(1f))
                     TextButton(onClick = { pictureFor = key; pickPicture.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)) }) {
-                        Text(if (has) "Change" else "Choose", color = AppColors.Accent)
+                        Text(if (has) "Change" else "Choose", color = AppColors.AccentInk)
                     }
                     if (has) TextButton(onClick = {
                         update { cur -> cur.pictures[key]?.let { File(it).delete() }; cur.copy(pictures = cur.pictures - key) }
@@ -190,7 +190,7 @@ fun SettingsScreen(
                 update { it.copy(palette = Palette(), tabPalettes = emptyMap()) }
                 Toast.makeText(context, "Colors reset", Toast.LENGTH_SHORT).show()
             }.heightIn(min = 52.dp).padding(horizontal = 16.dp), verticalAlignment = Alignment.CenterVertically) {
-                Text("Reset to default colors", color = AppColors.Accent, fontSize = 15.sp)
+                Text("Reset to default colors", color = AppColors.AccentInk, fontSize = 15.sp)
             }
         }
 
@@ -253,7 +253,7 @@ fun SettingsScreen(
             Row(Modifier.fillMaxWidth().clickable {
                 setIcon(context, app, a.copy(iconStyle = IconStyle.A, iconColor = AppIcon.DEFAULT_MAIN, iconColor2 = AppIcon.DEFAULT_SECOND))
             }.heightIn(min = 52.dp).padding(horizontal = 16.dp), verticalAlignment = Alignment.CenterVertically) {
-                Text("Reset to original icon", color = AppColors.Accent, fontSize = 15.sp)
+                Text("Reset to original icon", color = AppColors.AccentInk, fontSize = 15.sp)
             }
         }
 

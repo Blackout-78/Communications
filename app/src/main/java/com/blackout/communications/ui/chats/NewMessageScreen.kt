@@ -51,7 +51,7 @@ fun NewMessageScreen(contactsVm: ContactsViewModel, onBack: () -> Unit, onPick: 
             if (digits.length >= 3) {
                 item {
                     Row(Modifier.fillMaxWidth().clickable { onPick(query.trim()) }.padding(vertical = 14.dp), verticalAlignment = Alignment.CenterVertically) {
-                        Icon(Icons.AutoMirrored.Filled.Send, null, tint = AppColors.Accent)
+                        Icon(Icons.AutoMirrored.Filled.Send, null, tint = AppColors.AccentInk)
                         Text("Send to ${formatNumber(query.trim())}", fontSize = 16.sp, modifier = Modifier.padding(start = 14.dp))
                     }
                     HorizontalDivider(color = AppColors.Line)

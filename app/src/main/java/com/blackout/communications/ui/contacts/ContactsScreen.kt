@@ -242,7 +242,7 @@ private fun AlphabetBar(modifier: Modifier, onLetter: (Char) -> Unit) {
             .pointerInput(Unit) { detectTapGestures { currentOnLetter(letterAt(it.y)) } }
             .pointerInput(Unit) { detectVerticalDragGestures { change, _ -> currentOnLetter(letterAt(change.position.y)) } },
     ) {
-        Letters.forEach { Text(it.toString(), color = AppColors.Accent, fontSize = 10.sp, fontWeight = FontWeight.SemiBold, lineHeight = 13.sp) }
+        Letters.forEach { Text(it.toString(), color = AppColors.AccentInk, fontSize = 10.sp, fontWeight = FontWeight.SemiBold, lineHeight = 13.sp) }
     }
 }
 

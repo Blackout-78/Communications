@@ -177,7 +177,7 @@ fun EditContactScreen(
         Row(Modifier.fillMaxWidth().padding(start = 4.dp, end = 8.dp, top = 12.dp), verticalAlignment = Alignment.CenterVertically) {
             IconButton(onClick = { cancel() }) { Icon(Icons.Filled.Close, "Cancel") }
             Text(if (contactId == null) "New contact" else "Edit contact", fontSize = 20.sp, fontWeight = FontWeight.SemiBold, modifier = Modifier.weight(1f))
-            TextButton(onClick = { save() }) { Text("Save", color = AppColors.Accent, fontWeight = FontWeight.SemiBold, fontSize = 16.sp) }
+            TextButton(onClick = { save() }) { Text("Save", color = AppColors.AccentInk, fontWeight = FontWeight.SemiBold, fontSize = 16.sp) }
         }
 
         Column(
@@ -219,9 +219,9 @@ fun EditContactScreen(
                 )
             }
             TextButton(onClick = { numbers.add(NumberField("Mobile", "", numbers.isEmpty())) }) {
-                Icon(Icons.Filled.Add, null, tint = AppColors.Accent)
+                Icon(Icons.Filled.Add, null, tint = AppColors.AccentInk)
                 Spacer(Modifier.width(6.dp))
-                Text("Add number", color = AppColors.Accent)
+                Text("Add number", color = AppColors.AccentInk)
             }
 
             Field("Group (for example Family or Work)", group, { group = it }, KeyboardType.Text, KeyboardCapitalization.Words)
@@ -239,7 +239,7 @@ fun EditContactScreen(
                     .padding(horizontal = 14.dp, vertical = 12.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                Icon(Icons.Outlined.MusicNote, null, tint = AppColors.Accent)
+                Icon(Icons.Outlined.MusicNote, null, tint = AppColors.AccentInk)
                 Column(Modifier.weight(1f).padding(start = 12.dp)) {
                     Text(currentName ?: "Default ringtone", fontSize = 15.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
                     Text("Tap to choose any sound file on your phone", fontSize = 12.sp, color = AppColors.SubText)

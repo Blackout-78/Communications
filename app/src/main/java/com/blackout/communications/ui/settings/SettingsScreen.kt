@@ -317,6 +317,8 @@ fun SettingsScreen(
 
         // ------------------------------------------------ 8. About
         Section("About") {
+            Row1("Open GitHub Releases", null, "Opens in your browser") { com.blackout.communications.Version.openReleases(context) }
+            Divider()
             Text(com.blackout.communications.Version.full, fontSize = 15.sp, modifier = Modifier.padding(start = 16.dp, top = 14.dp))
             Text(
                 "This app has no internet permission. No data leaves your phone.",

@@ -348,6 +348,18 @@ fun ConversationScreen(
         ) {
             Box(Modifier.fillMaxSize().background(Color.Black)) {
                 UriImage(uri, Modifier.fillMaxSize(), fit = true)
+                val info by produceState("", uri) {
+                    value = withContext(Dispatchers.IO) {
+                        runCatching {
+                            val src = ImageDecoder.createSource(context.contentResolver, uri)
+                            var w = 0; var h = 0
+                            ImageDecoder.decodeBitmap(src) { d, i, _ -> w = i.size.width; h = i.size.height; d.setTargetSize(1, 1) }
+                            val kb = (context.contentResolver.openAssetFileDescriptor(uri, "r")?.use { it.length } ?: -1L) / 1024
+                            "${w}x${h} px, ${kb} KB"
+                        }.getOrDefault("")
+                    }
+                }
+                if (info.isNotEmpty()) Text(info, color = Color.White, fontSize = 12.sp, modifier = Modifier.align(Alignment.BottomCenter).padding(12.dp).background(Color.Black.copy(alpha = 0.6f)).padding(horizontal = 8.dp, vertical = 4.dp))
                 Row(Modifier.align(Alignment.TopStart).fillMaxWidth().padding(8.dp), verticalAlignment = Alignment.CenterVertically) {
                     IconButton(onClick = { viewing = null }) { Icon(Icons.Filled.Close, "Close", tint = Color.White) }
                     Box(Modifier.weight(1f))

@@ -123,6 +123,31 @@ fun AppRoot(request: LaunchRequest?, onRequestHandled: () -> Unit) {
         mutableStateOf(start)
     }
     var backupFocus by remember { mutableStateOf(false) }
+    // One-time: ask to keep Communications unrestricted so texts never wait on battery saving.
+    var batteryAsk by remember {
+        val seen = context.getSharedPreferences("first_run", android.content.Context.MODE_PRIVATE).getBoolean("battery_asked", false)
+        mutableStateOf(!seen && !com.blackout.communications.ui.settings.batteryOk(context))
+    }
+    if (batteryAsk) {
+        androidx.compose.material3.AlertDialog(
+            onDismissRequest = {},
+            title = { Text("Keep texts on time") },
+            text = { Text("Set Communications to Unrestricted in battery settings so Android never delays your texts.") },
+            confirmButton = {
+                androidx.compose.material3.TextButton(onClick = {
+                    context.getSharedPreferences("first_run", android.content.Context.MODE_PRIVATE).edit().putBoolean("battery_asked", true).apply()
+                    batteryAsk = false
+                    com.blackout.communications.ui.settings.openBattery(context)
+                }) { Text("Open setting") }
+            },
+            dismissButton = {
+                androidx.compose.material3.TextButton(onClick = {
+                    context.getSharedPreferences("first_run", android.content.Context.MODE_PRIVATE).edit().putBoolean("battery_asked", true).apply()
+                    batteryAsk = false
+                }) { Text("Later") }
+            },
+        )
+    }
     // Each tab can have its own colors; remember the tab for "Last used".
     LaunchedEffect(tab) {
         ThemeState.activeTab = tab.label

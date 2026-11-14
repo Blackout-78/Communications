@@ -200,6 +200,7 @@ class SmsDeliverReceiver : BroadcastReceiver() {
         val sentAt = messages[0].timestampMillis
         val subId = intent.getIntExtra("subscription", -1)
         val app = context.applicationContext as CommunicationsApp
+        val got = System.currentTimeMillis()
         val pending = goAsync()
         Messenger.scope.launch {
             try {
@@ -209,7 +210,9 @@ class SmsDeliverReceiver : BroadcastReceiver() {
                 if (saved == null) runCatching { PendingTexts.add(app, address, body, sentAt, subId) }
                 RxLog.mark(app, RxLog.SMS)
                 // Alert first, with the text we already have; nothing slow runs before this.
+                val savedAt = System.currentTimeMillis()
                 MessageNotifications.showFor(app, thread, address, body, textOnly = saved != null)
+                runCatching { RxLog.lag(app, sentAt, got, savedAt, System.currentTimeMillis()) }
                 runCatching { PendingTexts.flush(app) } // older texts that were waiting
             } finally {
                 pending.finish()

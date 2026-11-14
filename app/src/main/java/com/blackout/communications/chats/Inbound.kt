@@ -27,6 +27,35 @@ object RxLog {
     }
 
     fun last(c: Context, key: String): Long = prefs(c).getLong(key, 0L)
+
+    /**
+     * One line per text: when the sender sent it, when this phone got it, when it was saved and
+     * when the alert went out. Keeps the last 5, so a late text can be traced to its cause.
+     */
+    @Synchronized
+    fun lag(c: Context, sent: Long, got: Long, saved: Long, alerted: Long) {
+        val list = runCatching { JSONArray(prefs(c).getString("lag", "[]")) }.getOrDefault(JSONArray())
+        val next = JSONArray().put(JSONObject().put("s", sent).put("g", got).put("v", saved).put("a", alerted))
+        for (i in 0 until minOf(list.length(), 4)) next.put(list.get(i))
+        prefs(c).edit().putString("lag", next.toString()).apply()
+    }
+
+    /** Newest first: (sent, got, saved, alerted). */
+    fun lags(c: Context): List<LongArray> {
+        val list = runCatching { JSONArray(prefs(c).getString("lag", "[]")) }.getOrDefault(JSONArray())
+        return (0 until list.length()).map { val o = list.getJSONObject(it); longArrayOf(o.getLong("s"), o.getLong("g"), o.getLong("v"), o.getLong("a")) }
+    }
+
+    /** Plain-words cause of one text's delay. */
+    fun verdict(l: LongArray): String {
+        val carrier = (l[1] - l[0]) / 1000
+        val phone = (l[3] - l[1]) / 1000.0
+        return when {
+            carrier > 60 -> "carrier delay (${carrier}s before it reached the phone)"
+            phone > 3 -> "phone/app slow (${"%.1f".format(phone)}s to save and alert)"
+            else -> "fast (${"%.1f".format(phone)}s in the app)"
+        }
+    }
 }
 
 /**

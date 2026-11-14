@@ -53,12 +53,19 @@ fun MessageCheckDialog(onDismiss: () -> Unit) {
                 Line("Texting app", isDefault, if (isDefault) "Communications" else "Another app gets your texts. Fix it on the Chats tab.")
                 Line("Permissions", allowed, if (allowed) "Allowed" else "Missing. Fix it on the Chats tab.")
                 Line("Notifications", notifications, if (notifications) "On" else "Off, so new texts would be silent.")
+                val battery = batteryOk(context)
+                Line("Battery", battery, if (battery) "Unrestricted, so texts arrive on time" else "Restricted: Android may delay texts while the screen is off.")
+                if (!battery) TextButton(onClick = { openBattery(context) }) { Text("Open battery setting") }
                 Line("Texts waiting to be saved", waitingTexts == 0, waitingTexts.toString())
                 Line("Picture messages downloading", waitingPictures == 0, waitingPictures.toString())
                 Text("Last arrivals", fontWeight = FontWeight.SemiBold, fontSize = 14.sp, modifier = Modifier.padding(top = 12.dp, bottom = 2.dp))
                 Info("Text", whenText(context, RxLog.SMS))
                 Info("Picture message notice", whenText(context, RxLog.MMS_NOTICE))
                 Info("Picture message saved", whenText(context, RxLog.MMS_SAVED))
+                Text("Last 5 texts: delay check", fontWeight = FontWeight.SemiBold, fontSize = 14.sp, modifier = Modifier.padding(top = 12.dp, bottom = 2.dp))
+                val lags = RxLog.lags(context)
+                if (lags.isEmpty()) Text("None yet", fontSize = 13.sp, color = AppColors.SubText)
+                lags.forEach { Text("${CallBook.whenText(it[1])}: ${RxLog.verdict(it)}", fontSize = 12.sp, color = AppColors.SubText) }
                 Text("Last text you sent", fontWeight = FontWeight.SemiBold, fontSize = 14.sp, modifier = Modifier.padding(top = 12.dp, bottom = 2.dp))
                 Text(sendLine(context), fontSize = 13.sp, color = AppColors.SubText)
                 TxLog.lastDownloadProblem(context)?.let { (t, why) ->
@@ -101,9 +108,21 @@ private fun messageReport(context: Context): String = buildString {
     appendLine("Texting app: ${Texting.isDefaultTextingApp(context)}; permissions: ${Texting.canRead(context)}; notifications: ${NotificationManagerCompat.from(context).areNotificationsEnabled()}")
     appendLine("Last text received: ${whenText(context, RxLog.SMS)}")
     appendLine("Last picture notice: ${whenText(context, RxLog.MMS_NOTICE)}; saved: ${whenText(context, RxLog.MMS_SAVED)}")
+    appendLine("Battery unrestricted: ${batteryOk(context)}")
+    RxLog.lags(context).forEach { appendLine("Text ${CallBook.whenText(it[1])}: ${RxLog.verdict(it)}") }
     appendLine("Last text sent: ${sendLine(context)}")
     TxLog.lastDownloadProblem(context)?.let { appendLine("Last picture download problem: ${CallBook.whenText(it.first)}: ${it.second}") }
     appendLine("Waiting texts: ${PendingTexts.count(context)}; picture messages downloading: ${MmsInbox.count(context)}")
+}
+
+internal fun batteryOk(context: Context): Boolean =
+    context.getSystemService(android.os.PowerManager::class.java)?.isIgnoringBatteryOptimizations(context.packageName) ?: true
+
+/** Opens Android's battery list so Communications can be set to Unrestricted. */
+internal fun openBattery(context: Context) {
+    runCatching {
+        context.startActivity(android.content.Intent(android.provider.Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS).addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK))
+    }
 }
 
 internal fun copyReport(context: Context, text: String) {

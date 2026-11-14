@@ -54,7 +54,7 @@ fun MessageCheckDialog(onDismiss: () -> Unit) {
                 Line("Permissions", allowed, if (allowed) "Allowed" else "Missing. Fix it on the Chats tab.")
                 Line("Notifications", notifications, if (notifications) "On" else "Off, so new texts would be silent.")
                 val battery = batteryOk(context)
-                Line("Battery", battery, if (battery) "Unrestricted, so texts arrive on time" else "Restricted: Android may delay texts while the screen is off.")
+                Line("Battery", battery, if (battery) "OK: Android does not limit this app" else "Background use is Restricted: Android may delay texts. Set Battery to Unrestricted.")
                 if (!battery) TextButton(onClick = { openBattery(context) }) { Text("Open battery setting") }
                 Line("Texts waiting to be saved", waitingTexts == 0, waitingTexts.toString())
                 Line("Picture messages downloading", waitingPictures == 0, waitingPictures.toString())
@@ -115,13 +115,19 @@ private fun messageReport(context: Context): String = buildString {
     appendLine("Waiting texts: ${PendingTexts.count(context)}; picture messages downloading: ${MmsInbox.count(context)}")
 }
 
-internal fun batteryOk(context: Context): Boolean =
-    context.getSystemService(android.os.PowerManager::class.java)?.isIgnoringBatteryOptimizations(context.packageName) ?: true
+internal fun batteryOk(context: Context): Boolean {
+    // Android exempts the default texting app from battery optimization ("not available" in the list).
+    // The only thing left that can delay texts is a hard "Restricted" background limit.
+    val restricted = context.getSystemService(android.app.ActivityManager::class.java)?.isBackgroundRestricted ?: false
+    if (restricted) return false
+    return Texting.isDefaultTextingApp(context) ||
+        (context.getSystemService(android.os.PowerManager::class.java)?.isIgnoringBatteryOptimizations(context.packageName) ?: true)
+}
 
-/** Opens Android's battery list so Communications can be set to Unrestricted. */
+/** Opens this app's Android settings page (Battery > Unrestricted). */
 internal fun openBattery(context: Context) {
     runCatching {
-        context.startActivity(android.content.Intent(android.provider.Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS).addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK))
+        context.startActivity(android.content.Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS).setData(android.net.Uri.parse("package:${context.packageName}")).addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK))
     }
 }
 

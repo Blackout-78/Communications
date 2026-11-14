@@ -68,7 +68,6 @@ object Texting {
         val ticks = Channel<Unit>(Channel.CONFLATED)
         val observer = object : ContentObserver(Handler(Looper.getMainLooper())) {
             override fun onChange(selfChange: Boolean) {
-                if (MessageStore.saving.get() > 0) return // a picture/video is still arriving
                 ticks.trySend(Unit)
             }
         }
@@ -111,7 +110,6 @@ class ChatsViewModel(application: Application) : AndroidViewModel(application) {
     private val handler = Handler(Looper.getMainLooper())
     private val observer = object : ContentObserver(handler) {
         override fun onChange(selfChange: Boolean) {
-            if (MessageStore.saving.get() > 0) return // a picture/video is still arriving
             // One refresh for a burst of changes (sending a text changes storage several times).
             handler.removeCallbacksAndMessages(REFRESH)
             handler.postAtTime({ refresh() }, REFRESH, android.os.SystemClock.uptimeMillis() + 150)

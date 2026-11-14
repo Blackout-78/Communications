@@ -41,6 +41,11 @@ object ChatCache {
 }
 
 object MessageStore {
+    /** Incoming picture/video messages being written right now. Screens skip refreshes until it is 0. */
+    val saving = java.util.concurrent.atomic.AtomicInteger(0)
+    /** m_type of a picture message that isn't fully received yet. Hidden from chat, bubble and list. */
+    private const val HIDDEN_TYPE = 130
+
     private val CONVERSATIONS: Uri = Uri.parse("content://mms-sms/conversations?simple=true")
     private val CANONICAL: Uri = Uri.parse("content://mms-sms/canonical-addresses")
     private val MMS_PART: Uri = Uri.parse("content://mms/part")
@@ -66,7 +71,7 @@ object MessageStore {
             cr.query(Telephony.Sms.CONTENT_URI, arrayOf(Telephony.Sms.THREAD_ID), "${Telephony.Sms.READ} = 0 AND ${Telephony.Sms.TYPE} = 1", null, null)?.use { c ->
                 while (c.moveToNext()) unread.merge(c.getLong(0), 1, Int::plus)
             }
-            cr.query(Telephony.Mms.CONTENT_URI, arrayOf(Telephony.Mms.THREAD_ID), "${Telephony.Mms.READ} = 0 AND ${Telephony.Mms.MESSAGE_BOX} = 1", null, null)?.use { c ->
+            cr.query(Telephony.Mms.CONTENT_URI, arrayOf(Telephony.Mms.THREAD_ID), "${Telephony.Mms.READ} = 0 AND ${Telephony.Mms.MESSAGE_BOX} = 1 AND ${Telephony.Mms.MESSAGE_TYPE} != $HIDDEN_TYPE", null, null)?.use { c ->
                 while (c.moveToNext()) unread.merge(c.getLong(0), 1, Int::plus)
             }
         }
@@ -122,7 +127,7 @@ object MessageStore {
         runCatching {
             cr.query(
                 Telephony.Mms.CONTENT_URI, arrayOf(Telephony.Mms._ID, Telephony.Mms.DATE, Telephony.Mms.MESSAGE_BOX),
-                "${Telephony.Mms.THREAD_ID} = ?", arg, "${Telephony.Mms.DATE} DESC LIMIT 200",
+                "${Telephony.Mms.THREAD_ID} = ? AND ${Telephony.Mms.MESSAGE_TYPE} != $HIDDEN_TYPE", arg, "${Telephony.Mms.DATE} DESC LIMIT 200",
             )?.use { c -> while (c.moveToNext()) mms += Triple(c.getLong(0), c.getLong(1), c.getInt(2)) }
         }
         if (mms.isNotEmpty()) {
@@ -212,6 +217,19 @@ object MessageStore {
 
     /** Saves a picture message. box = Telephony.Mms.MESSAGE_BOX_INBOX or _OUTBOX. Returns its row. */
     fun saveMms(context: Context, box: Int, threadId: Long, address: String, dateSec: Long, parts: List<Pdu.Part>, transactionId: String?): Uri? {
+        val incoming = box == Telephony.Mms.MESSAGE_BOX_INBOX
+        if (incoming) saving.incrementAndGet()
+        try {
+            return saveMmsRow(context, box, threadId, address, dateSec, parts, transactionId)
+        } finally {
+            if (incoming && saving.decrementAndGet() == 0) {
+                // One refresh now that the whole message is in.
+                runCatching { context.contentResolver.notifyChange(Uri.parse("content://mms-sms/"), null) }
+            }
+        }
+    }
+
+    private fun saveMmsRow(context: Context, box: Int, threadId: Long, address: String, dateSec: Long, parts: List<Pdu.Part>, transactionId: String?): Uri? {
         val cr = context.contentResolver
         val values = ContentValues().apply {
             put(Telephony.Mms.THREAD_ID, threadId)
@@ -220,7 +238,8 @@ object MessageStore {
             put(Telephony.Mms.MESSAGE_BOX, box)
             put(Telephony.Mms.READ, if (box == Telephony.Mms.MESSAGE_BOX_INBOX) 0 else 1)
             put(Telephony.Mms.SEEN, if (box == Telephony.Mms.MESSAGE_BOX_INBOX) 0 else 1)
-            put(Telephony.Mms.MESSAGE_TYPE, if (box == Telephony.Mms.MESSAGE_BOX_INBOX) Pdu.TYPE_RETRIEVE_CONF else Pdu.TYPE_SEND_REQ)
+            // Incoming starts hidden and is revealed only after every picture/video part is written.
+            put(Telephony.Mms.MESSAGE_TYPE, if (box == Telephony.Mms.MESSAGE_BOX_INBOX) HIDDEN_TYPE else Pdu.TYPE_SEND_REQ)
             put(Telephony.Mms.MMS_VERSION, 0x12)
             put(Telephony.Mms.CONTENT_TYPE, "application/vnd.wap.multipart.mixed")
             if (transactionId != null) put(Telephony.Mms.TRANSACTION_ID, transactionId)
@@ -253,6 +272,10 @@ object MessageStore {
                 val partUri = cr.insert(Uri.parse("content://mms/$id/part"), pv)
                 if (!part.isText && partUri != null) cr.openOutputStream(partUri)?.use { it.write(part.data) }
             }
+        }
+        if (box == Telephony.Mms.MESSAGE_BOX_INBOX) {
+            // Fully received: now it appears in the chat, the bubble and the chat list.
+            runCatching { cr.update(row, ContentValues().apply { put(Telephony.Mms.MESSAGE_TYPE, Pdu.TYPE_RETRIEVE_CONF) }, null, null) }
         }
         return row
     }

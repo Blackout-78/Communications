@@ -65,6 +65,8 @@ fun MessageCheckDialog(onDismiss: () -> Unit) {
                     Text("Last picture download problem", fontWeight = FontWeight.SemiBold, fontSize = 14.sp, modifier = Modifier.padding(top = 12.dp, bottom = 2.dp))
                     Text("${CallBook.whenText(t)}: $why", fontSize = 13.sp, color = AppColors.SubText)
                 }
+                Text("Picture download settings", fontWeight = FontWeight.SemiBold, fontSize = 14.sp, modifier = Modifier.padding(top = 12.dp, bottom = 2.dp))
+                Text(mmsSettings(context), fontSize = 12.sp, color = AppColors.SubText)
                 Text(
                     "If a friend says they sent something and the times above don't show it, it never reached this phone as a text. " +
                         "The usual cause is chat messages: turn off \"Chat features\" (RCS) in Google Messages, and if this number was ever on an iPhone, " +
@@ -86,7 +88,15 @@ private fun sendLine(context: Context): String {
     return "${s.second}${if (s.third.isNotBlank()) " (${s.third})" else ""}, ${CallBook.whenText(s.first)}"
 }
 
+/** The phone's own picture-message settings (what the carrier is told when a picture is downloaded). */
+private fun mmsSettings(context: Context): String = runCatching {
+    val b = com.blackout.communications.chats.Messenger.smsManager(context).carrierConfigValues
+    listOf("userAgent", "uaProfUrl", "uaProfTagName", "maxImageWidth", "maxImageHeight", "maxMessageSize", "httpParams")
+        .joinToString("\n") { "$it = ${b.get(it) ?: "(none)"}" }
+}.getOrElse { "unavailable: ${it.message}" }
+
 private fun messageReport(context: Context): String = buildString {
+    appendLine("Picture download settings:\n${mmsSettings(context)}")
     appendLine("Communications message report (app ${com.blackout.communications.BuildConfigInfo.versionName(context)}, Android ${android.os.Build.VERSION.RELEASE})")
     appendLine("Texting app: ${Texting.isDefaultTextingApp(context)}; permissions: ${Texting.canRead(context)}; notifications: ${NotificationManagerCompat.from(context).areNotificationsEnabled()}")
     appendLine("Last text received: ${whenText(context, RxLog.SMS)}")

@@ -166,7 +166,12 @@ object MmsInbox {
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_MUTABLE,
         )
         // Ask for the full-size message: raise the phone's own size cap so big videos aren't refused.
-        val limits = android.os.Bundle().apply { putInt(android.telephony.SmsManager.MMS_CONFIG_MAX_MESSAGE_SIZE, 50 * 1024 * 1024) }
+        val limits = android.os.Bundle().apply {
+            putInt(android.telephony.SmsManager.MMS_CONFIG_MAX_MESSAGE_SIZE, 50 * 1024 * 1024)
+            // Tell the carrier this phone can show full-size pictures (default is 640x480).
+            putInt(android.telephony.SmsManager.MMS_CONFIG_MAX_IMAGE_WIDTH, 8192)
+            putInt(android.telephony.SmsManager.MMS_CONFIG_MAX_IMAGE_HEIGHT, 8192)
+        }
         runCatching { Messenger.smsManager(c).downloadMultimediaMessage(c, location, uri, limits, done) }
     }
 

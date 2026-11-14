@@ -86,6 +86,19 @@ object MessageStore {
         return out
     }
 
+    /** Newest unread incoming texts of one thread (oldest first): body and date. Light query for notifications. */
+    fun unreadTexts(context: Context, threadId: Long, limit: Int = 6): List<Pair<String, Long>> {
+        val out = ArrayList<Pair<String, Long>>()
+        runCatching {
+            context.contentResolver.query(
+                Telephony.Sms.CONTENT_URI, arrayOf(Telephony.Sms.BODY, Telephony.Sms.DATE),
+                "${Telephony.Sms.THREAD_ID} = ? AND ${Telephony.Sms.READ} = 0 AND ${Telephony.Sms.TYPE} = 1",
+                arrayOf(threadId.toString()), "${Telephony.Sms.DATE} DESC LIMIT $limit",
+            )?.use { c -> while (c.moveToNext()) out += c.getString(0).orEmpty() to c.getLong(1) }
+        }
+        return out.reversed()
+    }
+
     fun messages(context: Context, threadId: Long): List<ChatMessage> = loadMessages(context, threadId).also { ChatCache.messages[threadId] = it }
 
     /**
@@ -173,7 +186,7 @@ object MessageStore {
     // ---------------------------------------------------------------- Writing
 
     /** Saves a received text. Returns its row, or null if the phone's message storage refused it. */
-    fun saveIncomingSms(context: Context, address: String, body: String, sentAt: Long, subId: Int, receivedAt: Long = System.currentTimeMillis()): Uri? = runCatching {
+    fun saveIncomingSms(context: Context, address: String, body: String, sentAt: Long, subId: Int, receivedAt: Long = System.currentTimeMillis(), thread: Long? = null): Uri? = runCatching {
         val values = ContentValues().apply {
             put(Telephony.Sms.ADDRESS, address)
             put(Telephony.Sms.BODY, body)
@@ -183,7 +196,7 @@ object MessageStore {
             put(Telephony.Sms.SEEN, 0)
             put(Telephony.Sms.TYPE, Telephony.Sms.MESSAGE_TYPE_INBOX)
             put(Telephony.Sms.SUBSCRIPTION_ID, subId)
-            put(Telephony.Sms.THREAD_ID, threadId(context, address))
+            put(Telephony.Sms.THREAD_ID, thread ?: threadId(context, address))
         }
         context.contentResolver.insert(Telephony.Sms.Inbox.CONTENT_URI, values)
     }.getOrNull()

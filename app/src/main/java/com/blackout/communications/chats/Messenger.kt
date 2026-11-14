@@ -203,13 +203,14 @@ class SmsDeliverReceiver : BroadcastReceiver() {
         val pending = goAsync()
         Messenger.scope.launch {
             try {
-                runCatching { PendingTexts.flush(app) } // older texts that were waiting go in first
-                val saved = MessageStore.saveIncomingSms(app, address, body, sentAt, subId)
+                val thread = runCatching { MessageStore.threadId(app, address) }.getOrNull()
+                val saved = MessageStore.saveIncomingSms(app, address, body, sentAt, subId, thread = thread)
                 // Never lose a text: if it can't be saved now, keep it until it can.
                 if (saved == null) runCatching { PendingTexts.add(app, address, body, sentAt, subId) }
                 RxLog.mark(app, RxLog.SMS)
-                val thread = runCatching { MessageStore.threadId(app, address) }.getOrNull()
-                MessageNotifications.showFor(app, thread, address, body)
+                // Alert first, with the text we already have; nothing slow runs before this.
+                MessageNotifications.showFor(app, thread, address, body, textOnly = saved != null)
+                runCatching { PendingTexts.flush(app) } // older texts that were waiting
             } finally {
                 pending.finish()
             }

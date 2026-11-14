@@ -76,8 +76,8 @@ object Texting {
         ticks.trySend(Unit)
         val job = launch(Dispatchers.IO) {
             for (t in ticks) {
-                kotlinx.coroutines.delay(80) // one reload for a burst of changes
-                send(MessageStore.messages(context, threadId))
+                send(MessageStore.messages(context, threadId)) // reload at once...
+                kotlinx.coroutines.delay(60) // ...then fold a burst of changes into one more
             }
         }
         awaitClose {
@@ -112,7 +112,7 @@ class ChatsViewModel(application: Application) : AndroidViewModel(application) {
         override fun onChange(selfChange: Boolean) {
             // One refresh for a burst of changes (sending a text changes storage several times).
             handler.removeCallbacksAndMessages(REFRESH)
-            handler.postAtTime({ refresh() }, REFRESH, android.os.SystemClock.uptimeMillis() + 150)
+            handler.postAtTime({ refresh() }, REFRESH, android.os.SystemClock.uptimeMillis() + 30)
         }
     }
     private companion object { val REFRESH = Any() }

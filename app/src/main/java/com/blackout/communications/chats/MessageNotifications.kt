@@ -33,6 +33,8 @@ import kotlinx.coroutines.launch
  * Message notifications: reply from the notification, mark as read, and chat bubbles
  * that float over other apps (Android 11 and newer).
  */
+private class NotifLine(val body: String, val date: Long)
+
 object MessageNotifications {
     // Android keeps a channel's sound and vibration as first created, so changes need a new channel id.
     private const val CHANNEL = "messages_v3"
@@ -71,9 +73,9 @@ object MessageNotifications {
      * and otherwise a plain one built from the message itself, so a new message never arrives silently.
      * Muted and on-screen conversations are skipped on purpose.
      */
-    suspend fun showFor(app: CommunicationsApp, threadId: Long?, address: String, body: String) {
+    suspend fun showFor(app: CommunicationsApp, threadId: Long?, address: String, body: String, textOnly: Boolean = false) {
         val handled = try {
-            threadId != null && showFull(app, threadId)
+            threadId != null && showFull(app, threadId, if (textOnly) address else null)
         } catch (e: Exception) {
             false
         }
@@ -137,15 +139,18 @@ object MessageNotifications {
     }
 
     /** True if the notification was shown or skipped on purpose; false if it couldn't be built. */
-    private suspend fun showFull(app: CommunicationsApp, threadId: Long): Boolean {
+    private suspend fun showFull(app: CommunicationsApp, threadId: Long, textFrom: String? = null): Boolean {
         if (app.chatPrefs.isMuted(threadId)) return true
         if (ChatsState.openThread == threadId) return true // You're looking at it.
         channel(app)
-        val thread = MessageStore.threads(app).firstOrNull { it.id == threadId } ?: return false
-        val address = thread.addresses.firstOrNull() ?: return false
+        // Fast path for a plain text: two small queries instead of loading every thread and message.
+        val quick = if (textFrom != null) MessageStore.unreadTexts(app, threadId) else emptyList()
+        val thread = if (quick.isNotEmpty()) null else MessageStore.threads(app).firstOrNull { it.id == threadId } ?: return false
+        val address = (if (quick.isNotEmpty()) textFrom else thread?.addresses?.firstOrNull()) ?: return false
         val contact = app.contacts.findByNumber(address)
         val title = contact?.contact?.displayName?.ifBlank { null } ?: address
-        val unread = MessageStore.messages(app, threadId).filter { !it.outgoing }.takeLast(maxOf(thread.unread, 1)).takeLast(6)
+        val unread = if (quick.isNotEmpty()) quick.map { (b, d) -> NotifLine(b, d) }
+        else MessageStore.messages(app, threadId).filter { !it.outgoing }.takeLast(maxOf(thread!!.unread, 1)).takeLast(6).map { NotifLine(it.body, it.date) }
         if (unread.isEmpty()) return false
 
         val icon = IconCompat.createWithBitmap(avatarBitmap(title, contact))
@@ -199,7 +204,7 @@ object MessageNotifications {
             .setCategory(NotificationCompat.CATEGORY_MESSAGE)
             .setContentIntent(contentIntent)
             .setAutoCancel(true)
-            .setNumber(thread.unread)
+            .setNumber(thread?.unread ?: unread.size)
             .addAction(reply)
             .addAction(markRead)
             .setColor(AppColors.Accent.toArgb())

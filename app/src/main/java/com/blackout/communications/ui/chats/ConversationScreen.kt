@@ -529,14 +529,14 @@ fun UriImage(uri: Uri, modifier: Modifier, fit: Boolean = false) {
         value = withContext(Dispatchers.IO) {
             runCatching {
                 ImageDecoder.decodeBitmap(ImageDecoder.createSource(context.contentResolver, uri)) { d, info, _ ->
-                    val s = minOf(1f, (if (fit) 2048f else 900f) / maxOf(info.size.width, info.size.height))
+                    val s = minOf(1f, (if (fit) 4096f else 900f) / maxOf(info.size.width, info.size.height))
                     d.setTargetSize((info.size.width * s).toInt().coerceAtLeast(1), (info.size.height * s).toInt().coerceAtLeast(1))
                 }.asImageBitmap()
             }.getOrNull()
         }
     }
     val b = bitmap
-    if (b != null) Image(b, "Picture", contentScale = if (fit) ContentScale.Fit else ContentScale.Crop, modifier = modifier)
+    if (b != null) Image(b, "Picture", contentScale = if (fit) ContentScale.Fit else ContentScale.Crop, filterQuality = if (fit) androidx.compose.ui.graphics.FilterQuality.High else androidx.compose.ui.graphics.FilterQuality.Low, modifier = modifier)
     else Box(modifier.size(160.dp).background(Color(0xFF2E2E33)))
 }
 

@@ -106,6 +106,30 @@ fun SettingsScreen(
     var busy by remember { mutableStateOf(false) }
     var lastBackup by remember { mutableStateOf(BackupReminder.lastBackup(context)) }
     var folderName by remember { mutableStateOf(Backup.folderName(context)) }
+    var exportDialog by remember { mutableStateOf(false) }
+    var importFile by remember { mutableStateOf<android.net.Uri?>(null) }
+    var importNote by remember { mutableStateOf<String?>(null) }
+    fun runExport(pass: CharArray?) = scope.launch {
+        busy = true
+        val r = Backup.exportAll(context, pass)
+        pass?.fill(' ')
+        busy = false
+        lastBackup = BackupReminder.lastBackup(context)
+        Toast.makeText(
+            context,
+            r.error ?: ("Backed up ${r.contacts} contacts, ${r.messages} messages and ${r.calls} calls" + if (pass != null) ", encrypted." else ", NOT encrypted."),
+            Toast.LENGTH_LONG,
+        ).show()
+    }
+    fun runImport(file: android.net.Uri, pass: CharArray?) = scope.launch {
+        busy = true
+        val msg = Backup.import(context, file, pass)
+        pass?.fill(' ')
+        busy = false
+        if (msg == Backup.NEEDS_PASSPHRASE) { importNote = null; importFile = file }
+        else if (pass != null && msg.startsWith("Wrong passphrase")) { importNote = msg; importFile = file }
+        else { importFile = null; importNote = null; Toast.makeText(context, msg, Toast.LENGTH_LONG).show() }
+    }
 
     val pickPicture = rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
         val key = pictureFor ?: return@rememberLauncherForActivityResult
@@ -121,12 +145,7 @@ fun SettingsScreen(
         if (tree != null) { Backup.setFolder(context, tree); folderName = Backup.folderName(context) }
     }
     val pickImport = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { file ->
-        if (file != null) scope.launch {
-            busy = true
-            val msg = Backup.import(context, file)
-            busy = false
-            Toast.makeText(context, msg, Toast.LENGTH_LONG).show()
-        }
+        if (file != null) runImport(file, null)
     }
 
     val scroll = rememberScrollState()
@@ -290,20 +309,10 @@ fun SettingsScreen(
         Section("Backup") {
             Row1("Backup folder", folderName ?: "Not chosen") { pickFolder.launch(null) }
             Divider()
-            Row1(if (busy) "Working…" else "Back up now", null, "Contacts (.vcf), messages and call history") {
+            Row1(if (busy) "Working…" else "Back up now", null, "Encrypted with your passphrase (.cmbk)") {
                 if (busy) return@Row1
                 if (Backup.folder(context) == null) { pickFolder.launch(null); return@Row1 }
-                scope.launch {
-                    busy = true
-                    val r = Backup.exportAll(context)
-                    busy = false
-                    lastBackup = BackupReminder.lastBackup(context)
-                    Toast.makeText(
-                        context,
-                        r.error ?: "Backed up ${r.contacts} contacts, ${r.messages} messages and ${r.calls} calls.",
-                        Toast.LENGTH_LONG,
-                    ).show()
-                }
+                exportDialog = true
             }
             Divider()
             Row1("Import from a backup file", null, "Adds only what's missing") { pickImport.launch(arrayOf("*/*")) }
@@ -330,6 +339,30 @@ fun SettingsScreen(
 
     // ------------------------------------------------ Dialogs
     if (checkDialog) MessageCheckDialog { checkDialog = false }
+    if (exportDialog) PassphraseDialog(
+        title = "Encrypt this backup",
+        text = "Choose a passphrase (at least ${Backup.MIN_PASSPHRASE} characters). You need it to restore. If you forget it, the backup cannot be opened.",
+        confirm = "Back up",
+        extraLabel = "Save without encryption",
+        onExtra = { exportDialog = false; runExport(null) },
+        onDone = { pass -> exportDialog = false; runExport(pass) },
+        onCancel = { exportDialog = false },
+        minLength = Backup.MIN_PASSPHRASE,
+        askTwice = true,
+    )
+    importFile?.let { f ->
+        PassphraseDialog(
+            title = "Encrypted backup",
+            text = importNote ?: "Type the passphrase you chose when you made this backup.",
+            confirm = "Restore",
+            extraLabel = null,
+            onExtra = {},
+            onDone = { pass -> runImport(f, pass) },
+            onCancel = { importFile = null; importNote = null },
+            minLength = 1,
+            askTwice = false,
+        )
+    }
     if (callCheckDialog) CallCheckDialog { callCheckDialog = false }
     if (themeDialog) ChoiceDialog("Theme", ThemeMode.entries.map { it.label }, a.theme.ordinal, { themeDialog = false }) { i ->
         update { it.copy(theme = ThemeMode.entries[i]) }; themeDialog = false
@@ -456,5 +489,46 @@ private fun ChoiceDialog(title: String, options: List<String>, selected: Int, on
             }
         },
         confirmButton = { TextButton(onClick = onDismiss) { Text("Close") } },
+    )
+}
+
+
+/** Asks for a passphrase. The text is handed back as a CharArray the caller wipes after use. */
+@androidx.compose.runtime.Composable
+private fun PassphraseDialog(
+    title: String,
+    text: String,
+    confirm: String,
+    extraLabel: String?,
+    onExtra: () -> Unit,
+    onDone: (CharArray) -> Unit,
+    onCancel: () -> Unit,
+    minLength: Int,
+    askTwice: Boolean,
+) {
+    var one by remember { mutableStateOf("") }
+    var two by remember { mutableStateOf("") }
+    val ok = one.length >= minLength && (!askTwice || one == two)
+    AlertDialog(
+        onDismissRequest = onCancel,
+        title = { Text(title) },
+        text = {
+            Column {
+                Text(text, fontSize = 14.sp)
+                androidx.compose.material3.OutlinedTextField(
+                    value = one, onValueChange = { one = it }, singleLine = true, label = { Text("Passphrase") },
+                    visualTransformation = androidx.compose.ui.text.input.PasswordVisualTransformation(),
+                    keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(keyboardType = androidx.compose.ui.text.input.KeyboardType.Password),
+                )
+                if (askTwice) androidx.compose.material3.OutlinedTextField(
+                    value = two, onValueChange = { two = it }, singleLine = true, label = { Text("Type it again") },
+                    visualTransformation = androidx.compose.ui.text.input.PasswordVisualTransformation(),
+                    keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(keyboardType = androidx.compose.ui.text.input.KeyboardType.Password),
+                )
+                if (extraLabel != null) TextButton(onClick = onExtra) { Text(extraLabel) }
+            }
+        },
+        confirmButton = { TextButton(enabled = ok, onClick = { onDone(one.toCharArray()) }) { Text(confirm) } },
+        dismissButton = { TextButton(onClick = onCancel) { Text("Cancel") } },
     )
 }

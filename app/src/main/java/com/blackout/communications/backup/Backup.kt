@@ -46,17 +46,21 @@ object Backup {
 
     data class Result(val contacts: Int, val messages: Int, val calls: Int, val error: String? = null)
 
-    /** Writes all three backup files. */
-    suspend fun exportAll(context: Context): Result = withContext(Dispatchers.IO) {
+    /** Import answer meaning "this file is encrypted, ask for the passphrase and try again". */
+    const val NEEDS_PASSPHRASE = "needs-passphrase"
+    const val MIN_PASSPHRASE = BackupCrypto.MIN_PASSPHRASE
+
+    /** Writes all three backup files. With a [passphrase] they are encrypted (.cmbk); without one they are plain. */
+    suspend fun exportAll(context: Context, passphrase: CharArray? = null): Result = withContext(Dispatchers.IO) {
         val tree = folder(context) ?: return@withContext Result(0, 0, 0, "Choose a backup folder first.")
         val stamp = SimpleDateFormat("yyyy-MM-dd_HH-mm", Locale.US).format(Date())
         try {
             val (vcf, contactCount) = contactsVcf(context)
-            write(context, tree, "Communications-contacts-$stamp.vcf", "text/x-vcard", vcf.toByteArray())
+            write(context, tree, "Communications-contacts-$stamp.vcf", "text/x-vcard", vcf.toByteArray(), passphrase)
             val (messages, messageCount) = messagesJson(context)
-            write(context, tree, "Communications-messages-$stamp.json", "application/json", messages.toByteArray())
+            write(context, tree, "Communications-messages-$stamp.json", "application/json", messages.toByteArray(), passphrase)
             val (calls, callCount) = callsJson(context)
-            write(context, tree, "Communications-calls-$stamp.json", "application/json", calls.toByteArray())
+            write(context, tree, "Communications-calls-$stamp.json", "application/json", calls.toByteArray(), passphrase)
             BackupReminder.markBackedUp(context)
             Result(contactCount, messageCount, callCount)
         } catch (e: Exception) {
@@ -64,10 +68,14 @@ object Backup {
         }
     }
 
-    private fun write(context: Context, tree: Uri, name: String, mime: String, bytes: ByteArray) {
+    private fun write(context: Context, tree: Uri, name: String, mime: String, bytes: ByteArray, passphrase: CharArray?) {
         val dir = DocumentsContract.buildDocumentUriUsingTree(tree, DocumentsContract.getTreeDocumentId(tree))
-        val file = DocumentsContract.createDocument(context.contentResolver, dir, mime, name) ?: error("couldn't create $name")
-        context.contentResolver.openOutputStream(file)!!.use { it.write(bytes) }
+        val encrypted = passphrase != null
+        val data = if (passphrase != null) BackupCrypto.encrypt(bytes, passphrase) else bytes
+        val fileName = if (encrypted) name.substringBeforeLast('.') + ".cmbk" else name
+        val fileMime = if (encrypted) "application/octet-stream" else mime
+        val file = DocumentsContract.createDocument(context.contentResolver, dir, fileMime, fileName) ?: error("couldn't create $fileName")
+        context.contentResolver.openOutputStream(file)!!.use { it.write(data) }
     }
 
     // ---------------------------------------------------------------- Contacts (vCard)
@@ -280,10 +288,14 @@ object Backup {
     // ---------------------------------------------------------------- Import
 
     /** Reads a backup file and adds what's missing. Returns a sentence to show. */
-    suspend fun import(context: Context, file: Uri): String = withContext(Dispatchers.IO) {
+    suspend fun import(context: Context, file: Uri, passphrase: CharArray? = null): String = withContext(Dispatchers.IO) {
         try {
-            val bytes = context.contentResolver.openInputStream(file)!!.use { input ->
+            var bytes = context.contentResolver.openInputStream(file)!!.use { input ->
                 val out = ByteArrayOutputStream(); input.copyTo(out); out.toByteArray()
+            }
+            if (BackupCrypto.isEncrypted(bytes)) {
+                if (passphrase == null) return@withContext NEEDS_PASSPHRASE
+                bytes = BackupCrypto.decrypt(bytes, passphrase) ?: return@withContext "Wrong passphrase, or the file was changed."
             }
             val text = String(bytes, Charsets.UTF_8)
             when {

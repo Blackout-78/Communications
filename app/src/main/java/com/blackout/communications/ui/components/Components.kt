@@ -94,7 +94,7 @@ fun SquareSearchBar(
                 onValueChange = onQueryChange,
                 singleLine = true,
                 textStyle = TextStyle(color = AppColors.Text, fontSize = 16.sp),
-                cursorBrush = SolidColor(AppColors.Accent),
+                cursorBrush = SolidColor(androidx.compose.ui.graphics.Color.White),
                 modifier = Modifier.fillMaxWidth(),
             )
         }

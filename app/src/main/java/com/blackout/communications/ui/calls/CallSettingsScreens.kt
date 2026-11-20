@@ -275,7 +275,7 @@ fun CallSettingsScreen(contactsVm: ContactsViewModel, onBack: () -> Unit, onOpen
 private fun fieldColors() = OutlinedTextFieldDefaults.colors(
     focusedBorderColor = AppColors.Accent,
     unfocusedBorderColor = AppColors.Line,
-    cursorColor = AppColors.Accent,
+    cursorColor = androidx.compose.ui.graphics.Color.White,
 )
 
 // ---------------------------------------------------------------- Speed dial

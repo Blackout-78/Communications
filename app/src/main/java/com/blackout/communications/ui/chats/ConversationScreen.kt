@@ -287,7 +287,7 @@ fun ConversationScreen(
                         BasicTextField(
                             value = text, onValueChange = { text = it },
                             textStyle = TextStyle(color = AppColors.Text, fontSize = 15.sp),
-                            cursorBrush = SolidColor(AppColors.Accent),
+                            cursorBrush = SolidColor(androidx.compose.ui.graphics.Color.White),
                             maxLines = 5,
                             modifier = Modifier.fillMaxWidth(),
                         )

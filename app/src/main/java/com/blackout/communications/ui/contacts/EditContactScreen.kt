@@ -278,7 +278,7 @@ private fun Field(label: String, value: String, onChange: (String) -> Unit, type
             focusedBorderColor = AppColors.Accent,
             unfocusedBorderColor = AppColors.Line,
             focusedLabelColor = AppColors.Accent,
-            cursorColor = AppColors.Accent,
+            cursorColor = androidx.compose.ui.graphics.Color.White,
         ),
         modifier = modifier,
     )

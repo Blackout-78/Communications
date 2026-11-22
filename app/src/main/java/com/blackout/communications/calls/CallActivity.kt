@@ -12,6 +12,7 @@ import androidx.compose.runtime.getValue
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.blackout.communications.CommunicationsApp
 import com.blackout.communications.MainActivity
+import com.blackout.communications.ScreenGuard
 import com.blackout.communications.ui.calls.InCallScreen
 import com.blackout.communications.ui.calls.IncomingCallScreen
 import com.blackout.communications.ui.theme.CommunicationsTheme
@@ -22,6 +23,7 @@ class CallActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        ScreenGuard.apply(this)
         setShowWhenLocked(true)
         setTurnScreenOn(true)
         enableEdgeToEdge()

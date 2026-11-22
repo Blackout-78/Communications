@@ -56,6 +56,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.blackout.communications.BuildConfigInfo
 import com.blackout.communications.CommunicationsApp
+import com.blackout.communications.ScreenGuard
 import com.blackout.communications.backup.Backup
 import com.blackout.communications.backup.BackupReminder
 import com.blackout.communications.data.Appearance
@@ -259,6 +260,18 @@ fun SettingsScreen(
 
         // ------------------------------------------------ 3. General
         Section("General") { Row1("Default tab on launch", a.startTab.label) { startDialog = true } }
+
+        // ------------------------------------------------ Privacy
+        Section("Privacy") {
+            var guard by remember { mutableStateOf(ScreenGuard.isOn(context)) }
+            Row(Modifier.fillMaxWidth().clickable { guard = !guard; ScreenGuard.set(context, guard) }.heightIn(min = 52.dp).padding(horizontal = 12.dp, vertical = 4.dp), verticalAlignment = Alignment.CenterVertically) {
+                Checkbox(checked = guard, onCheckedChange = { guard = it; ScreenGuard.set(context, it) }, colors = CheckboxDefaults.colors(checkedColor = AppColors.Accent))
+                Column(Modifier.weight(1f)) {
+                    Text("Screen protection", fontSize = 15.sp)
+                    Text("Blanks the app in the recent apps list and blocks screenshots and screen recording", fontSize = 12.sp, color = AppColors.SubText)
+                }
+            }
+        }
 
         // ------------------------------------------------ 4. Calls
         Section("Calls") {

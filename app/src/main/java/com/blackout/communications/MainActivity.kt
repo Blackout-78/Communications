@@ -32,6 +32,7 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+        ScreenGuard.apply(this)
         if (savedInstanceState == null) handle(intent)
         ThemeState.appearance.let { AppIcon.applyAfterUpdate(this, it.iconStyle, it.iconColor, it.iconColor2) }
         setContent {

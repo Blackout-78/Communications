@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Surface
 import androidx.compose.ui.Modifier
 import com.blackout.communications.MainActivity
+import com.blackout.communications.ScreenGuard
 import com.blackout.communications.ui.chats.ConversationScreen
 import com.blackout.communications.ui.theme.AppColors
 import com.blackout.communications.ui.theme.CommunicationsTheme
@@ -16,6 +17,7 @@ import com.blackout.communications.ui.theme.CommunicationsTheme
 class BubbleActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        ScreenGuard.apply(this)
         val threadId = intent.getLongExtra(MessageNotifications.EXTRA_THREAD, -1)
         if (threadId < 0) { finish(); return }
         setContent {

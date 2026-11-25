@@ -3,33 +3,41 @@ package com.blackout.communications.calls
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.Service
+import android.content.ComponentName
 import android.content.ContentValues
 import android.content.Context
 import android.content.Intent
+import android.content.ServiceConnection
 import android.content.pm.ServiceInfo
-import android.media.MediaRecorder
 import android.net.Uri
 import android.os.Build
 import android.os.Environment
+import android.os.Handler
 import android.os.IBinder
+import android.os.Looper
 import android.os.ParcelFileDescriptor
 import android.provider.MediaStore
 import android.widget.Toast
 import androidx.core.app.NotificationCompat
+import com.blackout.communications.IRecorderService
 import com.blackout.communications.R
+import rikka.shizuku.Shizuku
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
 /**
- * Records a call through the microphone. Android only lets built-in phone apps record
- * the other person directly, so they are clear only when the call is on speakerphone.
+ * Records a call, both voices, through Shizuku. Android lets only the shell user record the call line,
+ * so a small recorder runs in Shizuku's shell process ([ShellRecorder]) and writes into the file made here.
  * Files go to the Recordings folder, named with name, number, date and time.
  */
 class RecordingService : Service() {
-    private var recorder: MediaRecorder? = null
     private var fd: ParcelFileDescriptor? = null
     private var uri: Uri? = null
+    private var recorder: IRecorderService? = null
+    private var args: Shizuku.UserServiceArgs? = null
+    private var conn: ServiceConnection? = null
+    private val handler = Handler(Looper.getMainLooper())
 
     override fun onBind(intent: Intent?): IBinder? = null
 
@@ -45,7 +53,7 @@ class RecordingService : Service() {
     }
 
     private fun start(name: String, number: String) {
-        if (recorder != null) return
+        if (conn != null) return
         val nm = getSystemService(NotificationManager::class.java)
         nm.createNotificationChannel(NotificationChannel(CHANNEL, "Call recording", NotificationManager.IMPORTANCE_LOW))
         val n = NotificationCompat.Builder(this, CHANNEL)
@@ -61,8 +69,13 @@ class RecordingService : Service() {
                 startForeground(NOTIFICATION_ID, n)
             }
         } catch (e: Exception) {
-            Toast.makeText(this, "Couldn't start recording", Toast.LENGTH_SHORT).show()
-            stopSelf()
+            fail("Couldn't start recording")
+            return
+        }
+
+        val notReady = ShizukuRec.notReady(this)
+        if (notReady != null) {
+            fail(notReady)
             return
         }
 
@@ -75,86 +88,69 @@ class RecordingService : Service() {
             put(MediaStore.Audio.Media.RELATIVE_PATH, folder())
             put(MediaStore.Audio.Media.IS_PENDING, 1)
         }
-        val prefs = getSharedPreferences("recording", MODE_PRIVATE)
-        // -1 = not tested yet, 1 = the call line records on this phone, 0 = microphone only
-        val lineWorks = prefs.getInt("voiceCallWorks", -1)
-        val first = if (lineWorks == 0) MediaRecorder.AudioSource.MIC else MediaRecorder.AudioSource.VOICE_CALL
-        if (!begin(values, first)) {
-            if (first == MediaRecorder.AudioSource.VOICE_CALL) prefs.edit().putInt("voiceCallWorks", 0).apply()
-            if (first == MediaRecorder.AudioSource.MIC || !begin(values, MediaRecorder.AudioSource.MIC)) {
-                Toast.makeText(this, "Couldn't start recording", Toast.LENGTH_SHORT).show()
-                cleanUp(keep = false)
-                stopSelf()
-                return
+        try {
+            val item = contentResolver.insert(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, values)!!
+            uri = item
+            fd = contentResolver.openFileDescriptor(item, "w")!!
+        } catch (e: Exception) {
+            fail("Couldn't create the recording file")
+            return
+        }
+
+        val a = Shizuku.UserServiceArgs(ComponentName(packageName, ShellRecorder::class.java.name))
+            .processNameSuffix("recorder").debuggable(false).daemon(false).version(1)
+        val c = object : ServiceConnection {
+            override fun onServiceConnected(name: ComponentName?, binder: IBinder?) {
+                val svc = IRecorderService.Stub.asInterface(binder)
+                recorder = svc
+                val file = fd ?: return
+                Thread {
+                    val err = try { svc.start(file) } catch (t: Throwable) { "${t.javaClass.simpleName}: ${t.message}" }
+                    handler.post {
+                        if (err.isEmpty()) {
+                            CallManager.recording.value = number
+                            CallManager.recordingBothSides.value = true
+                        } else {
+                            fail("Couldn't record the call: $err")
+                        }
+                    }
+                }.start()
+            }
+
+            override fun onServiceDisconnected(name: ComponentName?) {
+                // Shizuku stopped mid-call: the file was never finished, so it can't be played.
+                if (recorder != null) handler.post { fail("Shizuku stopped, so the recording was lost") }
             }
         }
-        CallManager.recording.value = number
-        CallManager.recordingBothSides.value = source == MediaRecorder.AudioSource.VOICE_CALL
-        // The call line can "work" but record only silence on phones that block it. Check after 2.5 s.
-        if (source == MediaRecorder.AudioSource.VOICE_CALL && lineWorks != 1) {
-            handler.postDelayed({ checkSound(values, 0) }, 800)
+        args = a
+        conn = c
+        try {
+            Shizuku.bindUserService(a, c)
+        } catch (e: Throwable) {
+            fail("Couldn't start the recorder: ${e.message}")
         }
     }
 
-    private val handler = android.os.Handler(android.os.Looper.getMainLooper())
-    private var source = MediaRecorder.AudioSource.MIC
-
-    /** Starts recording from [audioSource] into a new file. Returns false if this phone refuses it. */
-    private fun begin(values: ContentValues, audioSource: Int): Boolean = try {
-        val item = contentResolver.insert(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, values)!!
-        uri = item
-        fd = contentResolver.openFileDescriptor(item, "w")!!
-        val r = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) MediaRecorder(this) else @Suppress("DEPRECATION") MediaRecorder()
-        recorder = r
-        r.setAudioSource(audioSource)
-        r.setOutputFormat(MediaRecorder.OutputFormat.MPEG_4)
-        r.setAudioEncoder(MediaRecorder.AudioEncoder.AAC)
-        r.setAudioSamplingRate(44_100)
-        r.setAudioEncodingBitRate(128_000)
-        r.setOutputFile(fd!!.fileDescriptor)
-        r.prepare()
-        r.start()
-        source = audioSource
-        true
-    } catch (e: Exception) {
+    /** Shows why recording did not work, throws away the unfinished file and stops. */
+    private fun fail(message: String) {
+        Toast.makeText(this, message, Toast.LENGTH_LONG).show()
         cleanUp(keep = false)
-        false
-    }
-
-    /** Samples the volume a few times; if the call line gave only silence, switch to the microphone. */
-    private fun checkSound(values: ContentValues, tries: Int) {
-        val r = recorder ?: return
-        val level = runCatching { r.maxAmplitude }.getOrDefault(0)
-        val prefs = getSharedPreferences("recording", MODE_PRIVATE)
-        when {
-            level > 0 -> prefs.edit().putInt("voiceCallWorks", 1).apply()
-            tries < 3 -> handler.postDelayed({ checkSound(values, tries + 1) }, 600)
-            else -> {
-                prefs.edit().putInt("voiceCallWorks", 0).apply()
-                // Read the number first: cleanUp() clears it, and stop() ignores a call with no number.
-                val number = CallManager.recording.value
-                runCatching { r.stop() }
-                cleanUp(keep = false)
-                if (begin(values, MediaRecorder.AudioSource.MIC)) {
-                    CallManager.recording.value = number
-                    CallManager.recordingBothSides.value = false
-                } else {
-                    stopSelf()
-                }
-            }
-        }
+        stopSelf()
     }
 
     private fun finish() {
-        val r = recorder ?: return
-        val ok = runCatching { r.stop() }.isSuccess
+        val svc = recorder
+        val ok = svc != null && try { svc.stop().isEmpty() } catch (e: Throwable) { false }
         cleanUp(keep = ok)
     }
 
     private fun cleanUp(keep: Boolean) {
-        if (!keep) handler.removeCallbacksAndMessages(null)
-        recorder?.runCatching { release() }
         recorder = null
+        val a = args
+        val c = conn
+        if (a != null && c != null) runCatching { Shizuku.unbindUserService(a, c, true) }
+        args = null
+        conn = null
         fd?.runCatching { close() }
         fd = null
         uri?.let { item ->

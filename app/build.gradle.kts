@@ -55,6 +55,7 @@ android {
     buildFeatures {
         buildConfig = true
         compose = true
+        aidl = true
     }
 }
 
@@ -76,4 +77,8 @@ dependencies {
     implementation("androidx.room:room-runtime:$room")
     implementation("androidx.room:room-ktx:$room")
     ksp("androidx.room:room-compiler:$room")
+
+    // Call recording through the Shizuku app (open source, not Google). Local only, no internet needed.
+    implementation("dev.rikka.shizuku:api:13.1.5")
+    implementation("dev.rikka.shizuku:provider:13.1.5")
 }

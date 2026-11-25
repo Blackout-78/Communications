@@ -1,6 +1,6 @@
 name: Compile check
 
-# Builds a debug APK on every branch except main, so a mistake shows up before anything is merged.
+# Builds debug and release APKs on every branch except main, so a mistake shows up before anything is merged.
 # Nothing is signed, published or released here.
 on:
   push:
@@ -25,10 +25,10 @@ jobs:
           distribution: temurin
           java-version: "17"
       - uses: gradle/actions/setup-gradle@ed408507eac070d1f99cc633dbcf757c94c7933a  # v4
-      - name: Build a debug APK
+      - name: Build debug and release APKs (release uses the debug key; nothing is published)
         env:
           # The real build refuses to run without the signing key. This check never signs anything, so it skips that rule.
           CI: "false"
         run: |
           chmod +x gradlew
-          ./gradlew assembleDebug --no-daemon
+          ./gradlew assembleDebug assembleRelease --no-daemon

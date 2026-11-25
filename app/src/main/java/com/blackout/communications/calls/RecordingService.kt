@@ -131,9 +131,10 @@ class RecordingService : Service() {
             tries < 3 -> handler.postDelayed({ checkSound(values, tries + 1) }, 600)
             else -> {
                 prefs.edit().putInt("voiceCallWorks", 0).apply()
+                // Read the number first: cleanUp() clears it, and stop() ignores a call with no number.
+                val number = CallManager.recording.value
                 runCatching { r.stop() }
                 cleanUp(keep = false)
-                val number = CallManager.recording.value
                 if (begin(values, MediaRecorder.AudioSource.MIC)) {
                     CallManager.recording.value = number
                     CallManager.recordingBothSides.value = false
